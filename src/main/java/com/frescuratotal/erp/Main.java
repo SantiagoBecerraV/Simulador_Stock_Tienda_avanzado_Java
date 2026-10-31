@@ -4,8 +4,11 @@ package com.frescuratotal.erp;
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
 
+import com.frescuratotal.erp.suppliers.controller.SupplierController;
+import com.frescuratotal.erp.suppliers.view.SupplierView;
 import java.util.Scanner;
-
+import com.frescuratotal.erp.inventory.controller.ProductController;
+import com.frescuratotal.erp.inventory.view.ProductView;
 /**
  *
  * @author admin
@@ -14,6 +17,8 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        SupplierView supplierView = new SupplierView(scanner, new SupplierController());
+        ProductView productView = new ProductView(scanner, new ProductController());    
         boolean running = true;
 
         while (running) {
@@ -21,8 +26,8 @@ public class Main {
             int option = readOption(scanner);
 
             switch (option) {
-                case 1 -> System.out.println("Products: coming soon");
-                case 2 -> System.out.println("Suppliers: coming soon");
+                case 1 -> productView.show();
+                case 2 -> supplierView.show();
                 case 3 -> System.out.println("Inventory: coming soon");
                 case 0 -> {
                     running = false;
@@ -44,12 +49,14 @@ public class Main {
         System.out.print("Choose an option: ");
     }
 
-    // Sigue preguntando hasta que el usuario ingrese un número entero.
     private static int readOption(Scanner scanner) {
-        while (!scanner.hasNextInt()) {
-            scanner.next();
-            System.out.print("Please enter a number: ");
+        while (true) {
+            String line = scanner.nextLine().trim();
+            try {
+                return Integer.parseInt(line);
+            } catch (NumberFormatException e) {
+                System.out.print("Please enter a number: ");
+            }
         }
-        return scanner.nextInt();
     }
 }
