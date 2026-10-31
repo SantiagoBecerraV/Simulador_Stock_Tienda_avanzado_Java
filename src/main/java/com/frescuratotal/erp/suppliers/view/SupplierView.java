@@ -33,6 +33,9 @@ public class SupplierView {
             System.out.println("2. Add supplier");
             System.out.println("3. Update supplier");
             System.out.println("4. Deactivate supplier");
+            System.out.println("5. Show supplier catalog");
+            System.out.println("6. Add product to catalog");
+            System.out.println("7. Remove product from catalog");
             System.out.println("0. Back");
             System.out.print("Choose an option: ");
 
@@ -44,6 +47,9 @@ public class SupplierView {
                     case "2" -> addSupplier();
                     case "3" -> updateSupplier();
                     case "4" -> deactivateSupplier();
+                    case "5" -> showCatalog();
+                    case "6" -> addToCatalog();
+                    case "7" -> removeFromCatalog();                    
                     case "0" -> back = true;
                     default -> System.out.println("Invalid option");
                 }
@@ -94,6 +100,37 @@ public class SupplierView {
         boolean done = controller.deactivateSupplier(id);
         System.out.println(done ? "Supplier deactivated" : "Supplier not found");
     }
+    
+    //RELACION PROVEEDOR-PRODUCTO METODOS
+    private void showCatalog() throws SQLException {
+        int supplierId = askInt("Supplier ID: ");
+        List<String> lines = controller.listCatalog(supplierId);
+        if (lines.isEmpty()) {
+            System.out.println("This supplier has no products in its catalog");
+        }
+        for (String line : lines) {
+            System.out.println(line);
+        }
+    }
+
+    private void addToCatalog() throws SQLException {
+        int supplierId = askInt("Supplier ID: ");
+        System.out.println("Products:");
+        for (String option : controller.listProductOptions()) {
+            System.out.println("  " + option);
+        }
+        int productId = askInt("Product ID to add: ");
+        controller.addToCatalog(supplierId, productId);
+        System.out.println("Product added to catalog");
+    }
+
+    private void removeFromCatalog() throws SQLException {
+        int supplierId = askInt("Supplier ID: ");
+        int productId = askInt("Product ID to remove: ");
+        boolean removed = controller.removeFromCatalog(supplierId, productId);
+        System.out.println(removed ? "Product removed from catalog" : "That product is not in this catalog");
+    }   
+    // FIN PROVEEDOR PRODUCTO 
 
     private String ask(String prompt) {
         System.out.print(prompt);

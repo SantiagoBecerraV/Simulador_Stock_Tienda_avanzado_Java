@@ -34,8 +34,29 @@ public class SupplierController {
     public boolean deactivateSupplier(int id) throws SQLException {
         return dao.deactivate(id);
     }
+    
+    //METODOS PROVEEDOR - PRODUCTO
+    public List<String> listCatalog(int supplierId) throws SQLException {
+        return dao.findCatalog(supplierId);
+    }
 
-    // Name, NIT and email are required in the database
+    public List<String> listProductOptions() throws SQLException {
+        return dao.findProductOptions();
+    }
+
+    public void addToCatalog(int supplierId, int productId) throws SQLException {
+        if (supplierId <= 0 || productId <= 0) {
+            throw new IllegalArgumentException("IDs must be positive numbers");
+        }
+        dao.addProductToCatalog(supplierId, productId);
+    }
+
+    public boolean removeFromCatalog(int supplierId, int productId) throws SQLException {
+        return dao.removeProductFromCatalog(supplierId, productId);
+    }
+    //TERMINA PROOVEEDOR PRODUCTO
+    
+    // El nombre, NIT y correo electrónico son obligatorios en la base de datos
     private void validate(Supplier supplier) {
         if (isBlank(supplier.getName()) || isBlank(supplier.getNit()) || isBlank(supplier.getEmail())) {
             throw new IllegalArgumentException("Name, NIT and email are required");

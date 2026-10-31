@@ -77,7 +77,68 @@ public class SupplierDao {
             return statement.executeUpdate() > 0;
         }
     }
+    
+    //RELACION PROVEEDOR PRODUCTOS METODOS
+    // Retorna los productos que un proveedor puede suministrar, con el formato "3 | manzana | kg"
+    public List<String> findCatalog(int supplierId) throws SQLException {
+        String sql = "SELECT p.id_producto, p.nombre, p.unidad_medida "
+                   + "FROM productos_proveedor pp "
+                   + "JOIN productos p ON p.id_producto = pp.id_producto "
+                   + "WHERE pp.id_proveedor = ? ORDER BY p.nombre";
+        List<String> lines = new ArrayList<>();
 
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, supplierId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    lines.add(rs.getInt("id_producto") + " | " + rs.getString("nombre")
+                            + " | " + rs.getString("unidad_medida"));
+                }
+            }
+        }
+        return lines;
+    }
+
+    // Retorna todos los productos para que el usuario pueda seleccionar uno mediante su ID
+    public List<String> findProductOptions() throws SQLException {
+        String sql = "SELECT id_producto, nombre, unidad_medida FROM productos ORDER BY nombre";
+        List<String> lines = new ArrayList<>();
+
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                lines.add(rs.getInt("id_producto") + " | " + rs.getString("nombre")
+                        + " | " + rs.getString("unidad_medida"));
+            }
+        }
+        return lines;
+    }
+
+    public void addProductToCatalog(int supplierId, int productId) throws SQLException {
+        String sql = "INSERT INTO productos_proveedor (id_proveedor, id_producto) VALUES (?, ?)";
+
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, supplierId);
+            statement.setInt(2, productId);
+            statement.executeUpdate();
+        }
+    }
+
+    public boolean removeProductFromCatalog(int supplierId, int productId) throws SQLException {
+        String sql = "DELETE FROM productos_proveedor WHERE id_proveedor = ? AND id_producto = ?";
+
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, supplierId);
+            statement.setInt(2, productId);
+            return statement.executeUpdate() > 0;
+        }
+    }
+    // FIN PROVEEDOR PRODUCTO
+    
     // Convierte una fila de la tabla en un objeto Supplier.
     private Supplier mapRow(ResultSet rs) throws SQLException {
         return new Supplier(
@@ -90,6 +151,8 @@ public class SupplierDao {
                 rs.getString("direccion"),
                 rs.getBoolean("activo"));
     }
+    
+    
 }
 
 
