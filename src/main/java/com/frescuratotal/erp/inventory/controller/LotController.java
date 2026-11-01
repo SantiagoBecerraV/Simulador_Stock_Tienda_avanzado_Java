@@ -118,6 +118,23 @@ public class LotController {
         }
         return LotStatus.AVAILABLE;
     }
+
+    //metodo de registro de merma
+    public void registerWaste(int lotId, BigDecimal quantity, String reason, String user) throws SQLException {
+        if (lotId <= 0) {
+            throw new IllegalArgumentException("El id del lote debe ser un numero positivo...");
+        }
+        if (quantity == null || quantity.signum() <= 0) {
+            throw new IllegalArgumentException("La cantidad de merma debe ser mayor a cero...");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("La razon es obligatoria...");
+        }
+        if (user == null || user.isBlank()) {
+            throw new IllegalArgumentException("El nombre del usuario es obligatorio!!");
+        }
+        qualityDao.registerWaste(lotId, quantity, reason.trim(), user.trim());
+    }
     
     private void validate(int supplierId, int productId, LocalDate expirationDate,
                           BigDecimal quantity, BigDecimal purchasePrice, BigDecimal salePrice,

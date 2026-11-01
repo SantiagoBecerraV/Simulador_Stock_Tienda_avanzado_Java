@@ -35,7 +35,8 @@ public class LotView {
             System.out.println("2. Listar lotes");
             System.out.println("3. Verificar vencimientos");
             System.out.println("4. Poner lote en cuarentena");
-            System.out.println("5. Inspeccionar lote en cuarentena");            
+            System.out.println("5. Inspeccionar lote en cuarentena");    
+            System.out.println("6. Registrar Perdidas (merma)");
             System.out.println("0. Volver");
             System.out.print("Elija una opcion: ");
 
@@ -48,6 +49,7 @@ public class LotView {
                     case "3" -> runExpirationCheck();   
                     case "4" -> quarantineLot();
                     case "5" -> inspectLot();
+                    case "6" -> registerWaste();    
                     case "0" -> back = true;
                     default -> System.out.println("Opcion invalida!!");
                 }
@@ -89,7 +91,7 @@ public class LotView {
     //metodo del quarantine
     private void quarantineLot() throws SQLException {
         int lotId = askInt("ID del lote a poner en cuarentena: ");
-        String reason = ask("Motivo (empaque dañado, olor extraño, etc.): ");
+        String reason = ask("Motivo (empaque en mal estado, mal olor, etc.): ");
         String user = ask("Tu nombre: ");
 
         controller.quarantineLot(lotId, reason, user);
@@ -115,6 +117,17 @@ public class LotView {
 
         controller.inspectLot(lotId, approved, inspector, notes);
         System.out.println(approved ? "Lote aprobado !!" : "Lote rechazado y enviado a merma....");
+    }
+    
+    //metodo de registro de merma
+    private void registerWaste() throws SQLException {
+        int lotId = askInt("Id del Lote: ");
+        BigDecimal quantity = askDecimal("Cantidad perdida: ");
+        String reason = ask("Razon (vencido, danado, etc.): ");
+        String user = ask("Tu nombre: ");
+
+        controller.registerWaste(lotId, quantity, reason, user);
+        System.out.println("Perdida registrada y stock actualizado !!!");
     }
     
     private String ask(String prompt) {

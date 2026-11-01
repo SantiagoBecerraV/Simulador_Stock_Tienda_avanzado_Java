@@ -129,4 +129,45 @@ public class QualityDao {
             connection.setAutoCommit(true);
         }
     }
+    
+    //Metodos de registros de perdida
+    // Descuenta cantidad de un lote como merma. El stock nunca puede ser menor a cero.
+    public void registerWaste(int lotId, BigDecimal quantity, String reason, String user) throws SQLException {
+        Connection connection = DatabaseConnection.getConnection();
+        connection.setAutoCommit(false);
+        try {
+            String updateSql = "UPDATE lotes_inventario SET cantidad = cantidad - ? "
+                             + "WHERE id_lote = ? AND cantidad >= ? AND id_estado <> ?";
+            //La condicion cantidad >= ? es la que evita el stock negativo
+            //si pides mas de lo que hay, la consulta no cambia nada y el programa muestra el error.
+            int changedRows;
+            try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
+                statement.setBigDecimal(1, quantity);
+                statement.setInt(2, lotId);
+                statement.setBigDecimal(3, quantity);
+                statement.setInt(4, LotStatus.IN_QUARANTINE.getId());
+                changedRows = statement.executeUpdate();
+            }
+            if (changedRows == 0) {
+                throw new IllegalArgumentException("Stock insuficiente, el lote no existe o se encuentra en cuarentena");
+            }
+
+            String insertSql = "INSERT INTO registro_mermas (id_lote, cantidad_perdida, motivo, usuario_registro) "
+                             + "VALUES (?, ?, ?, ?)";
+            try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+                statement.setInt(1, lotId);
+                statement.setBigDecimal(2, quantity);
+                statement.setString(3, reason);
+                statement.setString(4, user);
+                statement.executeUpdate();
+            }
+
+            connection.commit();
+        } catch (SQLException | RuntimeException e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
 }
