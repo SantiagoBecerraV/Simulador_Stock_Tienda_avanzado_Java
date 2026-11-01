@@ -49,7 +49,7 @@ public class SupplierDao {
         }
     }
 
-    // Retorna true si se modificó una fila.
+    // Retorna true si se modifico una fila.
     public boolean update(Supplier supplier) throws SQLException {
         String sql = "UPDATE proveedores SET nombre = ?, nit = ?, persona_contacto = ?, "
                    + "email = ?, telefono = ?, direccion = ? WHERE id_proveedor = ?";
@@ -67,7 +67,7 @@ public class SupplierDao {
         }
     }
 
-    // No eliminamos proveedores: los lotes apuntan a ellos, así que solo los marcamos como inactivos.
+    // No eliminamos proveedores: los lotes apuntan a ellos, asi que solo los marcamos como inactivos.
     public boolean deactivate(int id) throws SQLException {
         String sql = "UPDATE proveedores SET activo = FALSE WHERE id_proveedor = ?";
 

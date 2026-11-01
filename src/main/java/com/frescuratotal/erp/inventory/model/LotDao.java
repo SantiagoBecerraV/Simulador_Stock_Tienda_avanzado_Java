@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Optional;
 /**
  *
  * @author admin
@@ -36,7 +37,7 @@ public class LotDao {
         return lots;
     }
 
-    // True if the supplier sells this product (the pair exists in productos_proveedor)
+   // Retorna true si el proveedor vende este producto (el registro existe en productos_proveedor)
     public boolean isInCatalog(int supplierId, int productId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM productos_proveedor WHERE id_proveedor = ? AND id_producto = ?";
 
@@ -74,7 +75,7 @@ public class LotDao {
         }
     }
 
-    // Marks AVAILABLE lots that expire within the next 7 days (today included)
+    // Marca los lotes DISPONIBLES que expiran dentro de los proximos 7 días (incluyendo hoy)
     public int markNearExpiry(LocalDate today, LocalDate limit) throws SQLException {
         String sql = "UPDATE lotes_inventario SET id_estado = ? "
                    + "WHERE id_estado = ? AND fecha_vencimiento BETWEEN ? AND ?";
@@ -89,8 +90,8 @@ public class LotDao {
         }
     }
 
-    // Marks lots as Expired when their date has passed.
-    // Quarantined lots are not changed: an inspector decides their destiny.
+    // Marca los lotes como Expirados cuando su fecha ya paso.
+    // Los lotes en cuarentena no cambian: un inspector decide su destino.
     public int markExpired(LocalDate today) throws SQLException {
         String sql = "UPDATE lotes_inventario SET id_estado = ? "
                    + "WHERE id_estado IN (?, ?) AND fecha_vencimiento < ?";
@@ -102,6 +103,24 @@ public class LotDao {
             statement.setInt(3, LotStatus.NEAR_EXPIRY.getId());
             statement.setDate(4, Date.valueOf(today));
             return statement.executeUpdate();
+        }
+    }
+    
+    //metodo de inspeccion dependiendo del id
+    public Optional<Lot> findById(int lotId) throws SQLException {
+        String sql = "SELECT id_lote, numero_lote, id_producto, id_proveedor, fecha_ingreso, "
+                   + "fecha_vencimiento, cantidad_inicial, cantidad, precio_compra, precio_venta, "
+                   + "pasillo, estante, id_estado FROM lotes_inventario WHERE id_lote = ?";
+
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, lotId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+                return Optional.empty();
+            }
         }
     }
 

@@ -28,13 +28,13 @@ public class ProductView {
         boolean back = false;
 
         while (!back) {
-            System.out.println("\n--- PRODUCTS ---");
-            System.out.println("1. List products");
-            System.out.println("2. Add product");
-            System.out.println("3. Update product");
-            System.out.println("4. Delete product");
-            System.out.println("0. Back");
-            System.out.print("Choose an option: ");
+            System.out.println("\n--- PRODUCTOS ---");
+            System.out.println("1. Listar productos");
+            System.out.println("2. Registrar producto");
+            System.out.println("3. Modificar producto");
+            System.out.println("4. Eliminar producto");
+            System.out.println("0. Volver");
+            System.out.print("Elija una opcion: ");
 
             String option = scanner.nextLine().trim();
 
@@ -45,7 +45,7 @@ public class ProductView {
                     case "3" -> updateProduct();
                     case "4" -> deleteProduct();
                     case "0" -> back = true;
-                    default -> System.out.println("Invalid option");
+                    default -> System.out.println("Opcion invalida!!! ");
                 }
             } catch (SQLException | IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
@@ -56,7 +56,7 @@ public class ProductView {
     private void listProducts() throws SQLException {
         List<Product> products = controller.listProducts();
         if (products.isEmpty()) {
-            System.out.println("There are no products yet");
+            System.out.println("No hay productos registrados aun...");
         }
         for (Product product : products) {
             System.out.println(product);
@@ -65,38 +65,38 @@ public class ProductView {
 
     private void addProduct() throws SQLException {
         showCategories();
-        String name = ask("Name: ");
-        String description = ask("Description: ");
-        int categoryId = askInt("Category ID: ");
-        String unit = ask("Unit (kg, litro, unidad): ");
-        BigDecimal price = askPrice("Base price: ");
+        String name = ask("Nombre: ");
+        String description = ask("Descripcion: ");
+        int categoryId = askInt("ID de categoria: ");
+        String unit = ask("Unidad de medida (kg, litro, unidad): ");
+        BigDecimal price = askPrice("Precio base: ");
 
         controller.addProduct(new Product(0, name, description, categoryId, unit, price));
-        System.out.println("Product added");
+        System.out.println("Producto anadido exitosamente!!");
     }
 
     private void updateProduct() throws SQLException {
-        int id = askInt("Product ID to update: ");
+        int id = askInt("ID del producto a actualizar ");
         showCategories();
-        String name = ask("New name: ");
-        String description = ask("New description: ");
-        int categoryId = askInt("New category ID: ");
-        String unit = ask("New unit: ");
-        BigDecimal price = askPrice("New base price: ");
+        String name = ask("Nombre nuevo: ");
+        String description = ask("Descripcion nueva: ");
+        int categoryId = askInt("Id de la nueva categoria: ");
+        String unit = ask("Nueva unidad de medida: ");
+        BigDecimal price = askPrice("Nuevo precio base: ");
 
         boolean updated = controller.updateProduct(
                 new Product(id, name, description, categoryId, unit, price));
-        System.out.println(updated ? "Product updated" : "Product not found");
+        System.out.println(updated ? "Producto actualizado con exito!!" : "Producto no encontrado");
     }
 
     private void deleteProduct() throws SQLException {
-        int id = askInt("Product ID to delete: ");
+        int id = askInt("Id del producto a eliminar: ");
         boolean deleted = controller.deleteProduct(id);
-        System.out.println(deleted ? "Product deleted" : "Product not found");
+        System.out.println(deleted ? "Producto eliminado con exito!!" : "Producto no encontrado");
     }
 
     private void showCategories() throws SQLException {
-        System.out.println("Categories:");
+        System.out.println("Categorias: ");
         for (String category : controller.listCategories()) {
             System.out.println("  " + category);
         }
@@ -111,7 +111,7 @@ public class ProductView {
         try {
             return Integer.parseInt(ask(prompt));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Enter a whole number");
+            throw new IllegalArgumentException("Debe ingresar un numero entero..");
         }
     }
 
@@ -119,7 +119,7 @@ public class ProductView {
         try {
             return new BigDecimal(ask(prompt));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Price must be a number, for example 5500 or 5500.50");
+            throw new IllegalArgumentException("El precio debe ser un numero, por ejemplo 5500 o 5500.50...");
         }
     }
 }

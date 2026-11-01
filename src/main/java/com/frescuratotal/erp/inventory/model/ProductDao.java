@@ -33,7 +33,7 @@ public class ProductDao {
         return products;
     }
 
-    // Returns the categories as text like "1 - Frutas", so the user can choose the number
+    // Retorna las categorias con el formato '1 - Frutas', para que el usuario pueda elegir el numero
     public List<String> findCategories() throws SQLException {
         String sql = "SELECT id_categoria, nombre FROM categorias_producto ORDER BY id_categoria";
         List<String> categories = new ArrayList<>();
@@ -79,7 +79,7 @@ public class ProductDao {
         }
     }
 
-    // La tabla products no tiene columna "active", por lo que esta es una eliminación real.
+    // La tabla products no tiene columna "active", por lo que esta es una eliminacion real.
     // MySQL la rechaza si todavía hay lotes usando el producto, y ese es el comportamiento esperado.
     public boolean delete(int id) throws SQLException {
         String sql = "DELETE FROM productos WHERE id_producto = ?";

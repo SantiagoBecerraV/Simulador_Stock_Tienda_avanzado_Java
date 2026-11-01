@@ -42,16 +42,16 @@ public class ProductController {
 
     private void validate(Product product) {
         if (isBlank(product.getName()) || isBlank(product.getUnit())) {
-            throw new IllegalArgumentException("Name and unit are required");
+            throw new IllegalArgumentException("El nombre y la unidad son obligatorios");
         }
         if (!VALID_UNITS.contains(product.getUnit().toLowerCase())) {
-            throw new IllegalArgumentException("Unit must be kg, litro or unidad");
+            throw new IllegalArgumentException("La unidad de medida debe ser: kg, litro o unidad");
         }
         if (product.getCategoryId() <= 0) {
-            throw new IllegalArgumentException("Category must be a positive number");
+            throw new IllegalArgumentException("El ID de la categoria debe ser un numero positivo");
         }
         if (product.getBasePrice() == null || product.getBasePrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Price must be zero or more");
+            throw new IllegalArgumentException("El precio debe ser cero o mayor");
         }
     }
 

@@ -63,8 +63,8 @@ public class Lot {
 
     @Override
     public String toString() {
-        return id + " | " + lotNumber + " | product " + productId
-                + " | supplier " + supplierId + " | qty " + quantity
-                + " | expires " + expirationDate + " | " + status;
+        return id + " | " + lotNumber + " | producto " + productId
+                + " | proveedor " + supplierId + " | cantidad " + quantity
+                + " | vence " + expirationDate + " | " + status;
     }
 }

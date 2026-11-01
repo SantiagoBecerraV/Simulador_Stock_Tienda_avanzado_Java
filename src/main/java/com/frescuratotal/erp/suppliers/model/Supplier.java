@@ -43,6 +43,6 @@ public class Supplier {
     @Override
     public String toString() {
         return id + " | " + name + " | NIT " + nit + " | " + email
-                + " | " + (active ? "Active" : "Inactive");
+                + " | " + (active ? "Activo" : "Inactivo");
     }
 }

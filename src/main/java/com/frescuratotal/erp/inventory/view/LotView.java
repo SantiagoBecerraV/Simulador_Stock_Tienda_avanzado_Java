@@ -30,12 +30,14 @@ public class LotView {
         boolean back = false;
 
         while (!back) {
-            System.out.println("\n--- INVENTORY (LOTS) ---");
-            System.out.println("1. Receive lot");
-            System.out.println("2. List lots");
-            System.out.println("3. Run expiration check");            
-            System.out.println("0. Back");
-            System.out.print("Choose an option: ");
+            System.out.println("\n--- INVENTARIO (LOTES) ---");
+            System.out.println("1. Ingresar lote");
+            System.out.println("2. Listar lotes");
+            System.out.println("3. Verificar vencimientos");
+            System.out.println("4. Poner lote en cuarentena");
+            System.out.println("5. Inspeccionar lote en cuarentena");            
+            System.out.println("0. Volver");
+            System.out.print("Elija una opcion: ");
 
             String option = scanner.nextLine().trim();
 
@@ -43,35 +45,37 @@ public class LotView {
                 switch (option) {
                     case "1" -> receiveLot();
                     case "2" -> listLots();
-                    case "3" -> runExpirationCheck();                    
+                    case "3" -> runExpirationCheck();   
+                    case "4" -> quarantineLot();
+                    case "5" -> inspectLot();
                     case "0" -> back = true;
-                    default -> System.out.println("Invalid option");
+                    default -> System.out.println("Opcion invalida!!");
                 }
             } catch (SQLException | IllegalArgumentException e) {
-                System.out.println("Error: " + e.getMessage());
+                System.out.println("Error!! : " + e.getMessage());
             }
         }
     }
 
     private void receiveLot() throws SQLException {
-        int supplierId = askInt("Supplier ID: ");
-        int productId = askInt("Product ID: ");
-        LocalDate expiration = askDate("Expiration date (yyyy-MM-dd): ");
-        BigDecimal quantity = askDecimal("Quantity received: ");
-        BigDecimal purchasePrice = askDecimal("Purchase price per unit: ");
-        BigDecimal salePrice = askDecimal("Sale price per unit: ");
-        String aisle = askOptional("Aisle (optional, Enter to skip): ");
-        String shelf = askOptional("Shelf (optional, Enter to skip): ");
+        int supplierId = askInt("ID Proveedor: ");
+        int productId = askInt("ID Producto: ");
+        LocalDate expiration = askDate("Fecha de vencimiento (yyyy-MM-dd): ");
+        BigDecimal quantity = askDecimal("Cantidad recibida: ");
+        BigDecimal purchasePrice = askDecimal("Precio de compra por unidad: ");
+        BigDecimal salePrice = askDecimal("Precio de venta por unidad: ");
+        String aisle = askOptional("Pasillo (opcional, Enter para omitir): ");
+        String shelf = askOptional("Estante (opcional, Enter para omitir): ");
 
         String lotNumber = controller.receiveLot(supplierId, productId, expiration,
                 quantity, purchasePrice, salePrice, aisle, shelf);
-        System.out.println("Lot received. Lot number: " + lotNumber);
+        System.out.println("Lote ingresado exitosamente. Numero de lote: " + lotNumber);
     }
 
     private void listLots() throws SQLException {
         List<Lot> lots = controller.listLots();
         if (lots.isEmpty()) {
-            System.out.println("There are no lots yet");
+            System.out.println("No hay lotes todavía.....");
         }
         for (Lot lot : lots) {
             System.out.println(lot);
@@ -80,6 +84,37 @@ public class LotView {
 
     private void runExpirationCheck() throws SQLException {
         System.out.println(controller.runExpirationCheck());
+    }
+    
+    //metodo del quarantine
+    private void quarantineLot() throws SQLException {
+        int lotId = askInt("ID del lote a poner en cuarentena: ");
+        String reason = ask("Motivo (empaque dañado, olor extraño, etc.): ");
+        String user = ask("Tu nombre: ");
+
+        controller.quarantineLot(lotId, reason, user);
+        System.out.println("Lote puesto en cuarentena");
+    }
+    
+    //Metodo de inspeccion
+    private void inspectLot() throws SQLException {
+        int lotId = askInt("Id del lote a inspeccionar: ");
+        String result = ask("Resultado (A = aceptado, R = rechazado): ");
+
+        boolean approved;
+        if (result.equalsIgnoreCase("A")) {
+            approved = true;
+        } else if (result.equalsIgnoreCase("R")) {
+            approved = false;
+        } else {
+            throw new IllegalArgumentException("El resultado debe ser A o R !!!");
+        }
+
+        String inspector = ask("Nombre del inspector: ");
+        String notes = ask(approved ? "Notas (Opcionales): " : "Razon para el rechazo deel proceso: ");
+
+        controller.inspectLot(lotId, approved, inspector, notes);
+        System.out.println(approved ? "Lote aprobado !!" : "Lote rechazado y enviado a merma....");
     }
     
     private String ask(String prompt) {
@@ -96,7 +131,7 @@ public class LotView {
         try {
             return Integer.parseInt(ask(prompt));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Enter a whole number");
+            throw new IllegalArgumentException("Ingrese un numero entero");
         }
     }
 
@@ -104,7 +139,7 @@ public class LotView {
         try {
             return new BigDecimal(ask(prompt));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Enter a number, for example 12 or 12.5");
+            throw new IllegalArgumentException("Ingrese un numero, por ejemplo 12 o 12.5");
         }
     }
 
@@ -112,7 +147,7 @@ public class LotView {
         try {
             return LocalDate.parse(ask(prompt));
         } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Date must look like 2026-12-31");
+            throw new IllegalArgumentException("La fecha debe tener el formato EJ: 2026-12-31");
         }
     }
 }

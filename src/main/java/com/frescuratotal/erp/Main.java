@@ -34,9 +34,9 @@ public class Main {
                 case 3 -> lotView.show();
                 case 0 -> {
                     running = false;
-                    System.out.println("Goodbye");
+                    System.out.println("Saliendo... \n");
                 }
-                default -> System.out.println("Invalid option, try again");
+                default -> System.out.println("Opcion invalida..... \n");
             }
         }
 
@@ -45,11 +45,11 @@ public class Main {
 
     private static void printMenu() {
         System.out.println("\n=== FRESCURA TOTAL ===");
-        System.out.println("1. Products");
-        System.out.println("2. Suppliers");
-        System.out.println("3. Inventory");
-        System.out.println("0. Exit");
-        System.out.print("Choose an option: ");
+        System.out.println("1. Productos");
+        System.out.println("2. Proveedores");
+        System.out.println("3. Inventario");
+        System.out.println("0. Salir");
+        System.out.print("Escoge una opcion: ");
     }
 
     private static int readOption(Scanner scanner) {
@@ -58,7 +58,7 @@ public class Main {
             try {
                 return Integer.parseInt(line);
             } catch (NumberFormatException e) {
-                System.out.print("Please enter a number: ");
+                System.out.print("Error ingrese un numero valido: ");
             }
         }
     }

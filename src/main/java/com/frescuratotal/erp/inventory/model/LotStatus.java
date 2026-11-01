@@ -12,7 +12,8 @@ public enum LotStatus {
     AVAILABLE(1),
     NEAR_EXPIRY(2),
     EXPIRED(3),
-    IN_QUARANTINE(4);
+    IN_QUARANTINE(4),
+    REJECTED(5);
 
     private final int id;
 
@@ -24,7 +25,7 @@ public enum LotStatus {
         return id;
     }
     
-    // Convierte el número almacenado en la base de datos en el valor del enum.
+    // Convierte el numero almacenado en la base de datos en el valor del enum.
     public static LotStatus fromId(int id) {
         for (LotStatus status : values()) {
             if (status.id == id) {

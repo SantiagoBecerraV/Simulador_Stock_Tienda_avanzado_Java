@@ -38,6 +38,6 @@ public class Product {
     @Override
     public String toString() {
         return id + " | " + name + " | " + unit + " | $" + basePrice
-                + " | category " + categoryId;
+                + " | categoria " + categoryId;
     }
 }

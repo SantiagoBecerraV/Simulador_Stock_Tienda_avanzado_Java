@@ -46,7 +46,7 @@ public class SupplierController {
 
     public void addToCatalog(int supplierId, int productId) throws SQLException {
         if (supplierId <= 0 || productId <= 0) {
-            throw new IllegalArgumentException("IDs must be positive numbers");
+            throw new IllegalArgumentException("Los ID deben ser numeros positivos");
         }
         dao.addProductToCatalog(supplierId, productId);
     }
@@ -59,7 +59,7 @@ public class SupplierController {
     // El nombre, NIT y correo electrónico son obligatorios en la base de datos
     private void validate(Supplier supplier) {
         if (isBlank(supplier.getName()) || isBlank(supplier.getNit()) || isBlank(supplier.getEmail())) {
-            throw new IllegalArgumentException("Name, NIT and email are required");
+            throw new IllegalArgumentException("El nombre, el NIT y el correo electronico son obligatorios !!");
         }
     }
 
