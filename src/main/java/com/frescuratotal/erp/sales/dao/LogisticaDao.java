@@ -399,9 +399,11 @@ public class LogisticaDao {
 
     // Entrega: guarda fecha, receptor y observaciones, pasa la venta a "Entregada" y,
     // si era la ultima pendiente, cierra la ruta como "Completada". Devuelve true si la ruta se completo.
+    // La transaccion se escribe aqui (no con ejecutarEnTransaccion) porque el metodo devuelve un valor.
     public boolean confirmarEntrega(int idRuta, int idVenta, String recibidoPor, String observaciones) throws SQLException {
-        boolean[] rutaCompletada = {false};
-        ejecutarEnTransaccion(() -> {
+        boolean autoCommitOriginal = conexion.getAutoCommit();
+        conexion.setAutoCommit(false);
+        try {
             String sqlEntrega = "UPDATE ventas_ruta SET fecha_entrega = NOW(), recibido_por = ?, observaciones = ? "
                     + "WHERE id_ruta = ? AND id_venta = ? AND fecha_entrega IS NULL "
                     + "AND EXISTS (SELECT 1 FROM rutas_entrega WHERE id_ruta = ? AND estado = ?)";
@@ -429,14 +431,19 @@ public class LogisticaDao {
                 }
             }
 
-            if (existe("SELECT 1 FROM ventas_ruta WHERE id_ruta = ? AND fecha_entrega IS NULL", idRuta)) {
-                return;
+            boolean rutaCompletada = !existe("SELECT 1 FROM ventas_ruta WHERE id_ruta = ? AND fecha_entrega IS NULL", idRuta);
+            if (rutaCompletada) {
+                cambiarEstadoRuta("UPDATE rutas_entrega SET estado = ?, hora_llegada_real = NOW() "
+                        + "WHERE id_ruta = ? AND estado = ?", EstadoRuta.COMPLETADA, idRuta, EstadoRuta.EN_TRANSITO);
             }
-            cambiarEstadoRuta("UPDATE rutas_entrega SET estado = ?, hora_llegada_real = NOW() "
-                    + "WHERE id_ruta = ? AND estado = ?", EstadoRuta.COMPLETADA, idRuta, EstadoRuta.EN_TRANSITO);
-            rutaCompletada[0] = true;
-        });
-        return rutaCompletada[0];
+            conexion.commit();
+            return rutaCompletada;
+        } catch (SQLException | RuntimeException e) {
+            conexion.rollback();
+            throw e;
+        } finally {
+            conexion.setAutoCommit(autoCommitOriginal);
+        }
     }
 
     // ---------- Auxiliares ----------
