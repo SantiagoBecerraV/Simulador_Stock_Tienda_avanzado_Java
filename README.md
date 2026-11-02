@@ -6,7 +6,8 @@ Sistema ERP de consola, hecho en Java y MySQL, para la bodega de alimentos "Fres
 
 ## Autores
 
-Becerra y Solano (completar con los nombres completos de los estudiantes antes de la entrega).
+Santiago Becerra
+Cristian Solano
 
 ## Requerimientos previos
 
@@ -112,7 +113,7 @@ Los modulos no se llaman entre si: se conectan por la base de datos y por el est
 - **Descuento:** se toma de la promocion activa y vigente (`promociones.tasa_descuento`) y solo se aplica a lotes `Proximo a Vencer`.
 - **Impuesto (IVA):** ni el esquema ni el enunciado definen una tarifa. La tasa es un valor de **demostracion**, 0 por defecto, definido en `ControladorVentas.TASA_IMPUESTO`. Se puede probar otra al ejecutar con `-Derp.tasaImpuesto=0.10` (fraccion entre 0 y 1). **Debe confirmarse la tarifa real con el negocio antes de usarla.**
 - **Factura:** es una factura de **demostracion**. El CUFE y el QR son simulados y el documento no tiene validez fiscal ante la DIAN. El NIT de la empresa sale de la tabla `informacion_empresa`.
-- **Proveedor 33:** en los datos de prueba generados con ayuda de IA, el proveedor con `id_proveedor = 33` lleva el NIT marcador `SYN-FT-900427-AG`, como lo exige el enunciado. Es un dato sintetico, no un NIT real.
+
 
 ## Principios y patrones de diseno
 
