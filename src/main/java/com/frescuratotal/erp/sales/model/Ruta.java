@@ -1,4 +1,4 @@
-package com.frescuratotal.erp.logistics.model;
+package com.frescuratotal.erp.sales.model;
 
 import java.sql.Timestamp;
 

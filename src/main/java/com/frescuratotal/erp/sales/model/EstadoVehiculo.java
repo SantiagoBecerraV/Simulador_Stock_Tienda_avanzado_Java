@@ -1,4 +1,4 @@
-package com.frescuratotal.erp.logistics.model;
+package com.frescuratotal.erp.sales.model;
 
 // Estados de vehiculos.estado. valorBd() es el valor exacto del ENUM de MySQL.
 public enum EstadoVehiculo {

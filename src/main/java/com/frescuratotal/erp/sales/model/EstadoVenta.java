@@ -1,4 +1,4 @@
-package com.frescuratotal.erp.logistics.model;
+package com.frescuratotal.erp.sales.model;
 
 // Estados de venta que usa Logística. Los nombres siguen el documento del reparto;
 // valorBd() es el texto exacto guardado en estados_venta.nombre.

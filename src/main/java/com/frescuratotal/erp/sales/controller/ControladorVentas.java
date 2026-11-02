@@ -1,7 +1,7 @@
 package com.frescuratotal.erp.sales.controller;
 
-import com.frescuratotal.erp.customers.dao.CustomerDao;
-import com.frescuratotal.erp.customers.model.Customer;
+import com.frescuratotal.erp.sales.dao.CustomerDao;
+import com.frescuratotal.erp.sales.model.Customer;
 import com.frescuratotal.erp.sales.dao.VentasDao;
 import com.frescuratotal.erp.sales.model.LineaPedido;
 import com.frescuratotal.erp.sales.model.Lote;

@@ -1,13 +1,13 @@
-package com.frescuratotal.erp.logistics.dao;
+package com.frescuratotal.erp.sales.dao;
 
-import com.frescuratotal.erp.logistics.model.Conductor;
-import com.frescuratotal.erp.logistics.model.EntregaRuta;
-import com.frescuratotal.erp.logistics.model.EstadoRuta;
-import com.frescuratotal.erp.logistics.model.EstadoVehiculo;
-import com.frescuratotal.erp.logistics.model.EstadoVenta;
-import com.frescuratotal.erp.logistics.model.Ruta;
-import com.frescuratotal.erp.logistics.model.Vehiculo;
-import com.frescuratotal.erp.logistics.model.VentaEnPreparacion;
+import com.frescuratotal.erp.sales.model.Conductor;
+import com.frescuratotal.erp.sales.model.EntregaRuta;
+import com.frescuratotal.erp.sales.model.EstadoRuta;
+import com.frescuratotal.erp.sales.model.EstadoVehiculo;
+import com.frescuratotal.erp.sales.model.EstadoVenta;
+import com.frescuratotal.erp.sales.model.Ruta;
+import com.frescuratotal.erp.sales.model.Vehiculo;
+import com.frescuratotal.erp.sales.model.VentaEnPreparacion;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -1,7 +1,7 @@
-package com.frescuratotal.erp.billing.view;
+package com.frescuratotal.erp.sales.view;
 
-import com.frescuratotal.erp.billing.controller.ControladorFacturacion;
-import com.frescuratotal.erp.billing.dao.FacturaDao;
+import com.frescuratotal.erp.sales.controller.ControladorFacturacion;
+import com.frescuratotal.erp.sales.dao.FacturaDao;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.Connection;

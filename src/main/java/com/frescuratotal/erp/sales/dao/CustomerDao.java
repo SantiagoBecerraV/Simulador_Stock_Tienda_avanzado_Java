@@ -1,6 +1,6 @@
-package com.frescuratotal.erp.customers.dao;
+package com.frescuratotal.erp.sales.dao;
 
-import com.frescuratotal.erp.customers.model.Customer;
+import com.frescuratotal.erp.sales.model.Customer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

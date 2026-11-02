@@ -1,7 +1,7 @@
-package com.frescuratotal.erp.customers.controller;
+package com.frescuratotal.erp.sales.controller;
 
-import com.frescuratotal.erp.customers.dao.CustomerDao;
-import com.frescuratotal.erp.customers.model.Customer;
+import com.frescuratotal.erp.sales.dao.CustomerDao;
+import com.frescuratotal.erp.sales.model.Customer;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;

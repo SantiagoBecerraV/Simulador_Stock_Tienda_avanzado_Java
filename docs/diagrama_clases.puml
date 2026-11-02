@@ -1,5 +1,6 @@
 @startuml
-' Diagrama de clases: clientes, ventas, facturación y logística (com.frescuratotal.erp).
+' Diagrama de clases del paquete sales; los bloques internos agrupan funciones.
+' En Java, las clases se organizan en sales/controller, dao, model y view.
 ' Para regenerar el PNG: java -jar plantuml.jar -tpng docs/diagrama_clases.puml
 !pragma layout smetana
 skinparam classAttributeIconSize 0
@@ -8,9 +9,10 @@ skinparam packageStyle rectangle
 skinparam defaultFontSize 11
 skinparam ranksep 40
 skinparam nodesep 25
-title Frescura Total ERP - Clientes, Ventas, Facturación y Logística
+title Frescura Total ERP - Módulo de ventas
 
-package "customers" {
+package "sales" {
+package "Clientes" {
   class CustomerMenu <<view>> {
     +ejecutar()
   }
@@ -42,7 +44,7 @@ package "customers" {
   }
 }
 
-package "sales" {
+package "Ventas" {
   class MenuVentas <<view>> {
     +ejecutar()
   }
@@ -77,7 +79,7 @@ package "sales" {
   }
 }
 
-package "billing" {
+package "Facturación" {
   class MenuFacturacion <<view>> {
     +ejecutar()
   }
@@ -113,7 +115,7 @@ package "billing" {
   }
 }
 
-package "logistics" {
+package "Logística" {
   class MenuLogistica <<view>> {
     +ejecutar()
   }
@@ -157,6 +159,7 @@ package "logistics" {
     INACTIVO
     MANTENIMIENTO
   }
+}
 }
 
 ' ---- customers ----

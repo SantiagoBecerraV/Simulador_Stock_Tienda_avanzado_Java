@@ -1,7 +1,7 @@
-package com.frescuratotal.erp.billing.view;
+package com.frescuratotal.erp.sales.view;
 
-import com.frescuratotal.erp.billing.model.Factura;
-import com.frescuratotal.erp.billing.model.Factura.LineaFactura;
+import com.frescuratotal.erp.sales.model.Factura;
+import com.frescuratotal.erp.sales.model.Factura.LineaFactura;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;

@@ -1,9 +1,9 @@
-package com.frescuratotal.erp.billing.dao;
+package com.frescuratotal.erp.sales.dao;
 
-import com.frescuratotal.erp.billing.model.Factura;
-import com.frescuratotal.erp.billing.model.Factura.Empresa;
-import com.frescuratotal.erp.billing.model.Factura.LineaFactura;
-import com.frescuratotal.erp.customers.dao.CustomerDao;
+import com.frescuratotal.erp.sales.model.Factura;
+import com.frescuratotal.erp.sales.model.Factura.Empresa;
+import com.frescuratotal.erp.sales.model.Factura.LineaFactura;
+import com.frescuratotal.erp.sales.dao.CustomerDao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

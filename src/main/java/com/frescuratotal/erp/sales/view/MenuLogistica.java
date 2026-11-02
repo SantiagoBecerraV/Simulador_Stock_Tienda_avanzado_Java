@@ -1,11 +1,11 @@
-package com.frescuratotal.erp.logistics.view;
+package com.frescuratotal.erp.sales.view;
 
-import com.frescuratotal.erp.logistics.controller.ControladorLogistica;
-import com.frescuratotal.erp.logistics.dao.LogisticaDao;
-import com.frescuratotal.erp.logistics.model.Conductor;
-import com.frescuratotal.erp.logistics.model.EstadoVehiculo;
-import com.frescuratotal.erp.logistics.model.Ruta;
-import com.frescuratotal.erp.logistics.model.Vehiculo;
+import com.frescuratotal.erp.sales.controller.ControladorLogistica;
+import com.frescuratotal.erp.sales.dao.LogisticaDao;
+import com.frescuratotal.erp.sales.model.Conductor;
+import com.frescuratotal.erp.sales.model.EstadoVehiculo;
+import com.frescuratotal.erp.sales.model.Ruta;
+import com.frescuratotal.erp.sales.model.Vehiculo;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;

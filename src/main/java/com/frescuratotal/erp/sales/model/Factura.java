@@ -1,6 +1,6 @@
-package com.frescuratotal.erp.billing.model;
+package com.frescuratotal.erp.sales.model;
 
-import com.frescuratotal.erp.customers.model.Customer;
+import com.frescuratotal.erp.sales.model.Customer;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
