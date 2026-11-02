@@ -324,9 +324,7 @@ INSERT INTO categorias_producto (nombre, descripcion) VALUES
 ON DUPLICATE KEY UPDATE nombre = nombre;
 
 -- 2.2 Proveedores (50)
--- Datos de prueba creados con ayuda de IA; las empresas y sus contactos son ficticios.
--- NIT del proveedor 33 indicado para el proyecto: 800084744-5.
--- Los proveedores 8 y 45 estan inactivos.
+
 INSERT INTO proveedores (id_proveedor, nombre, nit, persona_contacto, email, telefono, direccion, activo, fecha_registro) VALUES
 (1, 'Agricola La Esperanza S.A.S.', '900079560-8', 'Martha Lucia Pineda', 'ventas@agricolaesperanza.example.com', '316 845 3611', 'Vereda El Salitre km 4, Fusagasuga', TRUE, '2026-07-08 15:04:00'),
 (2, 'Frutales del Tolima Ltda.', '800809349-0', 'Hernan Dario Ospina', 'ventas@frutalestolima.example.com', '350 865 4325', 'Carrera 5 # 18-42, Ibague', TRUE, '2026-08-19 14:54:00'),
