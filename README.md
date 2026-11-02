@@ -1,124 +1,188 @@
 # ERP para la Bodega de Alimentos "Frescura Total"
 
-## Descripcion
+## Descripción
 
-Sistema ERP de consola, hecho en Java y MySQL, para la bodega de alimentos "Frescura Total". Reemplaza las hojas de calculo y los registros en papel con un flujo conectado: recepcion de lotes con fecha de vencimiento, proveedores, clientes, ventas que descuentan el inventario, facturas en PDF y despacho de pedidos con rutas, vehiculos y conductores. Asi se reducen las perdidas por vencimiento, se puede rastrear cada lote hasta su proveedor, no se venden productos agotados y la facturacion deja de ser manual.
+El ERP para la Bodega de Alimentos "Frescura Total" es un sistema de consola desarrollado en Java 17 y MySQL, diseñado para organizar y optimizar el día a día de una bodega de alimentos perecederos. El proyecto soluciona los problemas habituales del manejo manual con papel y hojas de cálculo: falta de control del inventario, pérdidas económicas por productos que se vencen en los estantes y desorden en el despacho de pedidos. Para resolverlo, el sistema conecta todo el flujo comercial en una sola herramienta: gestiona proveedores y productos, controla lotes priorizando la salida de los más próximos a vencer mediante la regla FEFO (*First Expired, First Out*), aplica promociones automáticas para rotar inventario, emite facturas en PDF con código QR y coordina la logística de entrega asignando pedidos a rutas, vehículos y conductores.
+
+---
 
 ## Autores
 
-Santiago Becerra
-Cristian Solano
+* **Santiago Becerra**
+* **Cristian Solano**
 
-## Requerimientos previos
+---
 
-- Java 17 (JDK 17 o superior; el proyecto compila con `release 17`).
-- Apache Maven 3.x (NetBeans incluye uno).
-- Apache NetBeans 12 o superior (opcional si se usa solo la terminal).
-- MySQL 8.0.
+## Requerimientos Previos
 
-Las librerias (driver MySQL, OpenPDF y ZXing para el PDF y el QR) las descarga Maven desde `pom.xml`.
+Para configurar y ejecutar el proyecto en su equipo local necesita:
 
-## Configuracion de la base de datos
+* **Java Development Kit (JDK):** Versión 17 o superior.
+* **Apache NetBeans IDE:** Versión 12 o superior (compatible con proyectos Maven).
+* **MySQL Server:** Versión 8.0 o superior en ejecución local.
+* **Apache Maven:** Versión 3.6 o superior (NetBeans ya incluye Maven por defecto).
 
-1. Inicie el servidor MySQL 8.0 local.
-2. Ejecute el script maestro **`docs/database.sql`**. Es la unica fuente para crear la base y cargar los datos de prueba:
-   - Desde MySQL Workbench: abra el archivo y ejecutelo completo.
-   - Desde la terminal: `mysql -u root -p < docs/database.sql`
-3. El script tiene tres secciones: DDL (estructura), DML (datos de prueba, repetibles sin duplicar) y consultas de verificacion de solo lectura al final.
+Las librerías externas necesarias se descargan de forma automática a través del archivo `pom.xml`:
+* **MySQL Connector/J:** Conector JDBC para la comunicación con la base de datos.
+* **OpenPDF:** Generación y maquetación de facturas en formato PDF.
+* **ZXing Core:** Generación de códigos QR incluidos en las facturas.
 
-> **Advertencia:** el script empieza con `DROP DATABASE IF EXISTS erp_frescura_total`. Al ejecutarlo completo se borra esa base y se crea de nuevo. No lo ejecute sobre datos que quiera conservar. Para cargar solo los datos sobre una base ya creada, ejecute desde la linea `SECCION 2: DML` en adelante.
+---
 
-**Orden de ejecucion:** usa `docs/database.sql` como el unico script de base de datos del proyecto.
+## Configuración de la Base de Datos
 
-### Credenciales de conexion
+### 1. Creación y carga de datos
 
-La conexion esta en `src/main/java/com/frescuratotal/erp/common/DatabaseConnection.java`, en las constantes `URL`, `USER` y `PASSWORD`. Ejemplo:
+El proyecto utiliza un único script maestro ubicado en **`docs/database.sql`**, el cual se encarga de crear todas las tablas (DDL) y cargar los catálogos y datos iniciales de prueba (DML).
+
+Para configurarla en su MySQL local, siga estos pasos:
+
+1. Asegúrese de que el servicio local de MySQL esté en ejecución.
+2. Abra su herramienta preferida (MySQL Workbench, DBeaver o la consola de MySQL).
+3. Ejecute el script **`docs/database.sql`**:
+   * **Desde la terminal:**
+     ```bash
+     mysql -u root -p < docs/database.sql
+     ```
+   * **Desde MySQL Workbench:**
+     * Vaya a `File` > `Open SQL Script...` y abra `docs/database.sql`.
+     * Ejecute todo el script haciendo clic en el ícono del rayo (*Execute*).
+
+> **Importante:** El script comienza con `DROP DATABASE IF EXISTS erp_frescura_total;`, por lo que creará una base de datos limpia con todas sus tablas y datos de prueba listos para usar.
+
+### 2. Configuración de credenciales en el código
+
+La conexión se administra de forma centralizada en la clase:
+[`DatabaseConnection.java`](src/main/java/com/frescuratotal/erp/common/DatabaseConnection.java)
+
+Abra el archivo y ajuste las constantes `URL`, `USER` y `PASSWORD` con los datos de su entorno local (por ejemplo, si su puerto es 3306 o 3308):
 
 ```java
-private static final String URL = "jdbc:mysql://localhost:3306/erp_frescura_total";
-private static final String USER = "root";
-private static final String PASSWORD = "su_contrasena";
+package com.frescuratotal.erp.common;
+
+public class DatabaseConnection {
+
+    // Ajuste el puerto y el nombre de la base de datos según su instalación
+    private static final String URL = "jdbc:mysql://localhost:3306/erp_frescura_total";
+    
+    // Usuario de MySQL
+    private static final String USER = "root";
+    
+    // Contraseña de su usuario de MySQL
+    private static final String PASSWORD = "su_contrasena";
+
+    // ...
+}
 ```
 
-Ajuste el puerto y la contrasena a su instalacion de MySQL. No suba al repositorio una contrasena real. Todos los modulos usan esta misma conexion.
+---
 
-## Instalacion y ejecucion
+## Instalación y Ejecución
 
-1. Clone el repositorio: `git clone https://github.com/SantiagoBecerraV/Frescura_total_java_Becerra_Solano.git`
-2. Abra la carpeta del proyecto en Apache NetBeans (File > Open Project).
-3. Compile: Run > Clean and Build Project.
-4. Ejecute: Run > Run Project (tecla F6).
+### Opción 1: Desde Apache NetBeans IDE
 
-Desde la terminal, en la carpeta del proyecto:
+1. **Clonar el repositorio:**  
+   Abra la terminal o su cliente Git y clone el proyecto:
+   ```bash
+   git clone https://github.com/SantiagoBecerraV/Frescura_total_java_Becerra_Solano.git
+   ```
+2. **Abrir el proyecto en NetBeans:**  
+   * Abra NetBeans y vaya a `File` > `Open Project...`.
+   * Seleccione la carpeta `FrescuraTotal` (el IDE la reconocerá automáticamente como un proyecto Maven).
+3. **Compilar el proyecto:**  
+   * En el menú superior, haga clic en `Run` > `Clean and Build Project` (o use el atajo `Shift + F11`). NetBeans descargará las dependencias y compilará el código.
+4. **Ejecutar la aplicación:**  
+   * En el menú superior, haga clic en `Run` > `Run Project` (o presione la tecla `F6`).
+   * La aplicación iniciará y mostrará el menú principal en la consola de NetBeans.
 
-```
-mvn clean compile
-mvn compile exec:java
-```
+### Opción 2: Desde la terminal
 
-(La clase principal `com.frescuratotal.erp.Main` esta definida en `pom.xml`. La primera vez, Maven necesita internet para descargar el plugin `exec`.)
+También puede compilar y ejecutar el proyecto directamente por consola:
 
-El PDF de cada factura se guarda en la carpeta `facturas/`, relativa a donde se ejecuta el programa.
+1. **Compilar y ejecutar con Maven:**
+   ```bash
+   mvn clean compile
+   mvn compile exec:java
+   ```
+2. **Ejecutar mediante el archivo `.jar` empaquetado:**  
+   Genere el archivo empaquetado con:
+   ```bash
+   mvn clean package
+   ```
+   Y luego ejecútelo desde la carpeta de salida generada (`target/` o `dist/`):
+   ```bash
+   java -jar target/FrescuraTotal-1.0-SNAPSHOT.jar
+   ```
 
-### Menu principal
+> **Nota:** Las facturas PDF generadas por el sistema se guardan automáticamente en la carpeta `facturas/`, ubicada en la raíz del proyecto.
 
-1. Productos
-2. Proveedores
-3. Inventario
-4. Ventas (nueva venta, ver lotes, pasar una venta a preparacion)
-5. Facturacion (generar o regenerar la factura PDF de una venta)
-6. Clientes
-7. Logistica (vehiculos, conductores, rutas, despacho y entregas)
-0. Salir
+---
 
-## Estructura del proyecto
+## Estructura del Proyecto
 
-La arquitectura es MVC por componentes: cada modulo tiene sus paquetes `controller`, `model` y `view`.
+El sistema está organizado bajo una arquitectura **MVC por componentes funcionales**. En lugar de tener paquetes gigantes donde se mezclan modelos o controladores de todo el sistema, cada módulo de negocio (`inventory`, `suppliers`, `sales`, `common`) agrupa sus propios modelos, vistas, controladores y clases de acceso a datos (DAO):
 
-```
+```text
 src/main/java/com/frescuratotal/erp/
-+-- common/        Conexion compartida a la base de datos (DatabaseConnection)
-+-- inventory/     controller, model, view  (productos, lotes, calidad, trazabilidad)
-+-- suppliers/     controller, model, view  (proveedores)
-+-- sales/         controller, dao, model, view
-|                    clientes, ventas, facturacion y logistica
-+-- Main.java      Punto de entrada y menu principal
+├── common/                  # Infraestructura común y conexión a base de datos
+│   └── DatabaseConnection.java
+├── inventory/               # Gestión de productos, lotes y trazabilidad
+│   ├── controller/          # ProductController, LotController
+│   ├── model/               # Product, Lot, ProductDao, LotDao
+│   └── view/                # ProductView, LotView
+├── suppliers/               # Gestión de proveedores
+│   ├── controller/          # SupplierController
+│   ├── model/               # Supplier, SupplierDao
+│   └── view/                # SupplierView
+├── sales/                   # Clientes, ventas, facturación y logística
+│   ├── controller/          # ControladorVentas, ControladorFacturacion, ControladorLogistica, CustomerController
+│   ├── dao/                 # VentasDao, FacturaDao, LogisticaDao, CustomerDao
+│   ├── model/               # Customer, Factura, Lote, LineaPedido, Ruta, Vehiculo, Conductor
+│   └── view/                # MenuVentas, MenuFacturacion, FacturaPdf, MenuLogistica, CustomerMenu
+└── Main.java                # Punto de entrada de la aplicación y menú principal
 ```
 
-El modulo `sales` agrupa cuatro funciones, cada una con sus clases:
+### Resumen de módulos y responsabilidades:
 
-| Funcion | Controller | DAO | Model | View |
-|---|---|---|---|---|
-| Clientes | `CustomerController` | `CustomerDao` | `Customer` | `CustomerMenu` |
-| Ventas | `ControladorVentas` | `VentasDao` | `Lote`, `LineaPedido`, `VentaRegistrada` | `MenuVentas` |
-| Facturacion | `ControladorFacturacion` | `FacturaDao` | `Factura` | `MenuFacturacion`, `FacturaPdf` |
-| Logistica | `ControladorLogistica` | `LogisticaDao` | `Vehiculo`, `Conductor`, `Ruta`, `EntregaRuta`, `VentaEnPreparacion` y los estados | `MenuLogistica` |
+| Módulo | Controladores | Acceso a Datos (DAO) | Modelos Principales | Vistas / Salidas |
+| :--- | :--- | :--- | :--- | :--- |
+| **Productos e Inventario** | `ProductController`, `LotController` | `ProductDao`, `LotDao` | `Product`, `Lot` | `ProductView`, `LotView` |
+| **Proveedores** | `SupplierController` | `SupplierDao` | `Supplier` | `SupplierView` |
+| **Clientes** | `CustomerController` | `CustomerDao` | `Customer` | `CustomerMenu` |
+| **Ventas** | `ControladorVentas` | `VentasDao` | `Lote`, `LineaPedido`, `VentaRegistrada` | `MenuVentas` |
+| **Facturación** | `ControladorFacturacion` | `FacturaDao` | `Factura` | `MenuFacturacion`, `FacturaPdf` |
+| **Logística** | `ControladorLogistica` | `LogisticaDao` | `Vehiculo`, `Conductor`, `Ruta`, `EntregaRuta` | `MenuLogistica` |
 
-Los diagramas estan en `docs/`: `diagrama_er.png` (entidad-relacion, fuente `diagrama_er.puml`) y `diagrama_clases.png` (fuente `diagrama_clases.puml`).
+### Flujo del negocio:
+Los módulos no se acoplan directamente entre sí, sino que colaboran mediante los estados del pedido en la base de datos:
+1. **Inventario** registra los lotes y actualiza los que están próximos a vencer mediante alertas y pre-alertas de vencimiento.
+2. **Ventas** consulta lotes disponibles o próximos a vencer (ordenados por fecha bajo la regla FEFO), descuenta el inventario y crea la venta en estado `Registrada`.
+3. **Facturación** genera la factura PDF con QR en la venta. Si se requiere, permite reimprimirla sin duplicar ventas.
+4. **Preparación y Logística:** la venta pasa a estado `En Preparación`, permitiendo a Logística armar rutas de entrega, asignar vehículo y chofer, pasar a `En Tránsito` y finalmente marcarla como `Entregada`.
 
-## Como se relacionan los modulos
+---
 
-Los modulos no se llaman entre si: se conectan por la base de datos y por el estado de la venta.
+## Principios y Patrones de Diseño
 
-1. **Proveedores e Inventario** registran proveedores, productos y lotes (con fecha de vencimiento y cantidad). Un proceso diario de Inventario marca como `Proximo a Vencer` los lotes con 7 dias o menos.
-2. **Ventas** lista los lotes vendibles y arma el pedido de un cliente. Al confirmar, guarda la venta (estado `Registrada`) y descuenta la cantidad del lote, todo en una sola transaccion.
-3. **Facturacion**: apenas se confirma la venta se genera la factura PDF. Si la factura fallara, la venta ya quedo guardada y se puede generar despues desde el menu Facturacion sin duplicarla (una factura por venta).
-4. **Pasar a preparacion**: en Ventas, opcion 3, la venta pasa de `Registrada` a `En Preparacion`.
-5. **Logistica** solo ve las ventas `En Preparacion`. Con ellas crea una ruta, le asigna vehiculo y conductor, inicia el despacho (`En Transito`) y confirma cada entrega (`Entregada`).
+Para mantener el código ordenado, mantenible y fácil de entender, aplicamos los siguientes principios y patrones:
 
-## Reglas de negocio importantes
+### 1. Patrón DAO (Data Access Object)
+Reunimos todas las consultas SQL y el manejo de JDBC en clases especializadas como `VentasDao`, `FacturaDao`, `CustomerDao`, `LogisticaDao`, `ProductDao`, `LotDao` y `SupplierDao`. De esta manera, los controladores y las vistas nunca escriben ni conocen sentencias SQL, sino que únicamente reciben y manipulan objetos del dominio. Si el día de mañana se cambia la estructura de una tabla o se optimiza un índice, solo debemos modificar el archivo DAO correspondiente sin alterar la lógica de negocio ni la interfaz de usuario.
 
-- **Lotes vendibles:** solo se ofrecen lotes `Disponible` o `Proximo a Vencer`, con existencias y sin vencer. Nunca se venden lotes `Vencido`, `En Cuarentena` o `Rechazado`. El enunciado pide mostrar solo lotes `Available` y, a la vez, aplicar descuento a los `Near Expiry`; se resolvio vendiendo ambos estados, porque un lote proximo a vencer sigue siendo apto para la venta y es justo el que la promocion busca rotar.
-- **FEFO:** los lotes se muestran ordenados por fecha de vencimiento, primero los que vencen antes.
-- **Descuento:** se toma de la promocion activa y vigente (`promociones.tasa_descuento`) y solo se aplica a lotes `Proximo a Vencer`.
-- **Impuesto (IVA):** ni el esquema ni el enunciado definen una tarifa. La tasa es un valor de **demostracion**, 0 por defecto, definido en `ControladorVentas.TASA_IMPUESTO`. Se puede probar otra al ejecutar con `-Derp.tasaImpuesto=0.10` (fraccion entre 0 y 1). **Debe confirmarse la tarifa real con el negocio antes de usarla.**
-- **Factura:** es una factura de **demostracion**. El CUFE y el QR son simulados y el documento no tiene validez fiscal ante la DIAN. El NIT de la empresa sale de la tabla `informacion_empresa`.
+### 2. Patrón Singleton
+Al inicio pensamos en abrir una conexión por operación, pero nos dimos cuenta de que no solo saturaba el servidor MySQL innecesariamente en una aplicación monousuario, sino que además nos impedía coordinar transacciones seguras con confirmaciones y cancelaciones. Por esa razón decidimos implementar el patrón Singleton en la clase `DatabaseConnection` (`com.frescuratotal.erp.common`), protegiendo su constructor como privado y ofreciendo un único punto de acceso global mediante el método estático `getConnection()`. Así garantizamos una única conexión viva durante toda la ejecución de la aplicación, compartida de forma limpia entre los distintos módulos.
 
+### 3. Principio de Responsabilidad Única (SRP)
+Al momento de diseñar el módulo de facturación, decidimos no recargar una sola clase con todo el proceso. Preferimos repartir el trabajo en componentes con una única tarea bien definida: `FacturaPdf` se encarga exclusivamente de maquetar el documento visual y generar la imagen del código QR con OpenPDF y ZXing; `FacturaDao` se limita a consultar y registrar los datos de la factura en MySQL; y `ControladorFacturacion` orquesta el flujo de negocio sin meterse en detalles de diseño visual ni en código SQL. Con esta separación, si queremos cambiar los estilos, colores o fuentes del PDF, lo hacemos directamente en `FacturaPdf` con la total tranquilidad de que no afectaremos el cálculo de totales ni la persistencia de las ventas.
 
-## Principios y patrones de diseno
+### 4. Inversión de Dependencias y Manejo Transaccional
+En lugar de que cada DAO o controlador cree su propia conexión de forma rígida, diseñamos las clases para que reciban la conexión activa mediante sus constructores (por ejemplo, `new VentasDao(conexion)` o `new LogisticaDao(conexion)`). Esta decisión desacopló las clases del origen de datos y nos permitió manejar transacciones atómicas en operaciones compuestas: al registrar una venta, insertamos el encabezado, registramos el detalle y descontamos las existencias del lote bajo una misma unidad de trabajo con `commit`, garantizando que ante cualquier error inesperado se ejecute un `rollback` automático y la base de datos nunca quede en un estado inconsistente.
 
-**MVC por componentes y DAO.** Cada modulo separa la vista de consola (`view`), la logica y las validaciones (`controller`) y las entidades (`model`). Las consultas SQL viven solo en las clases DAO (por ejemplo `VentasDao`, `FacturaDao`, `LogisticaDao`), de modo que el resto del codigo no depende de SQL. Asi un cambio en una consulta toca una sola clase.
+---
 
-**Inyeccion de la conexion y Singleton.** `DatabaseConnection` (paquete `common`) entrega una unica conexion y los menus se la pasan por constructor a los DAO. Los DAO no abren conexiones propias, lo que evita duplicarlas y permite manejar transacciones: registrar una venta, iniciar un despacho o confirmar una entrega se hacen con `commit` y, si algo falla, `rollback`.
+## Nota del equipo
 
-**Responsabilidad unica y entidades inmutables.** Las entidades sencillas son `record` de Java (`Customer`, `Lote`, `Factura`...), y cada clase hace una sola cosa: `FacturaPdf` solo dibuja el PDF y `ControladorFacturacion` coordina su creacion.
+* **Credenciales de base de datos:** Las credenciales que figuran en el código de ejemplo (`Campus2026` o `su_contrasena` en el puerto `3306` o `3308`) son referencias utilizadas durante las pruebas locales del equipo. Cada usuario debe verificar y ajustar su usuario, contraseña y puerto según su propia instalación local de MySQL.
+* **Facturación electrónica simulada:** Los valores de CUFE y el código QR generados en los archivos PDF son simulaciones creadas con fines estrictamente académicos y demostrativos; no representan documentos fiscales oficiales ante la DIAN.
+* **Generación automática de carpetas:** No es necesario crear la carpeta `facturas/` manualmente antes de iniciar el programa; la aplicación detecta si el directorio existe y lo crea de forma automática en la raíz del proyecto cuando se genera la primera factura.
+* **Tasa de impuesto (IVA):** Para facilitar las pruebas de demostración, el sistema utiliza una tasa inicial de 0 en `ControladorVentas.TASA_IMPUESTO`. Si se desea probar con un porcentaje específico de IVA, puede pasarse como propiedad de ejecución (por ejemplo `-Derp.tasaImpuesto=0.10`).
