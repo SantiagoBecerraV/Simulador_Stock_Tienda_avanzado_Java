@@ -118,21 +118,23 @@ package "logistics" {
     +ejecutar()
   }
   class ControladorLogistica <<controller>> {
-    +crearVehiculo()
-    +crearConductor()
-    +crearRuta()
+    +crear / actualizar / eliminarVehiculo()
+    +cambiarEstadoVehiculo()
+    +crear / actualizar / eliminarConductor()
+    +cambiarActivoConductor()
+    +crear / actualizar / cancelarRuta()
     +asignarVehiculoYConductor()
-    +asignarVenta()
+    +asignarVenta() / quitarVentaDeRuta()
     +iniciarDespacho(idRuta)
     +confirmarEntrega(idRuta, idVenta)
   }
   class LogisticaDao <<dao>> {
-    +listarVentasEnPreparacion()
-    +listarVehiculos()
-    +listarConductores()
-    +listarRutas()
-    +iniciarDespacho(idRuta)
-    +confirmarEntrega(idRuta, idVenta)
+    +listar y buscar vehículos, conductores, rutas
+    +insertar / actualizar / eliminar
+    +guardarAsignacion()
+    +cancelarRuta(idRuta) [transacción]
+    +iniciarDespacho(idRuta) [transacción]
+    +confirmarEntrega(idRuta, idVenta) [transacción]
   }
   class VentaEnPreparacion <<record>>
   class Vehiculo <<record>>
