@@ -28,6 +28,10 @@ public class LogisticaDao {
             + "LEFT JOIN vehiculos ve ON ve.id_vehiculo = a.id_vehiculo "
             + "LEFT JOIN conductores co ON co.id_conductor = a.id_conductor ";
 
+    // Ruta que aun no termina. Se arma con valores fijos del enum (no con datos del usuario).
+    private static final String RUTA_PENDIENTE = "r.estado IN ('" + EstadoRuta.PLANIFICADA.valorBd() + "', '"
+            + EstadoRuta.EN_TRANSITO.valorBd() + "')";
+
     // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection conexion;
 
@@ -258,13 +262,13 @@ public class LogisticaDao {
     // idRutaExcluida es la ruta que se esta editando (use 0 para no excluir ninguna).
     public boolean vehiculoOcupado(int idVehiculo, int idRutaExcluida) throws SQLException {
         return existe("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
-                + "WHERE a.id_vehiculo = ? AND a.id_ruta <> ? AND r.estado IN ('Planificada', 'En Transito')",
+                + "WHERE a.id_vehiculo = ? AND a.id_ruta <> ? AND " + RUTA_PENDIENTE,
                 idVehiculo, idRutaExcluida);
     }
 
     public boolean conductorOcupado(int idConductor, int idRutaExcluida) throws SQLException {
         return existe("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
-                + "WHERE a.id_conductor = ? AND a.id_ruta <> ? AND r.estado IN ('Planificada', 'En Transito')",
+                + "WHERE a.id_conductor = ? AND a.id_ruta <> ? AND " + RUTA_PENDIENTE,
                 idConductor, idRutaExcluida);
     }
 

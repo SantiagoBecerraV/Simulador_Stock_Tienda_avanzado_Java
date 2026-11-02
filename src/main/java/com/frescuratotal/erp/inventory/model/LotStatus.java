@@ -8,6 +8,8 @@ package com.frescuratotal.erp.inventory.model;
  *
  * @author admin
  */
+// Los ids deben coincidir con los id_estado que docs/database.sql inserta en estados_lote
+// (1 = Disponible ... 5 = Rechazado, en ese orden). Si cambia el orden del INSERT, cambie tambien aqui.
 public enum LotStatus {
     AVAILABLE(1, "Disponible"),
     NEAR_EXPIRY(2, "Proximo a vencer"),

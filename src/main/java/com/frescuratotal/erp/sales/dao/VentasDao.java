@@ -1,5 +1,6 @@
 package com.frescuratotal.erp.sales.dao;
 
+import com.frescuratotal.erp.sales.model.EstadoVenta;
 import com.frescuratotal.erp.sales.model.LineaPedido;
 import com.frescuratotal.erp.sales.model.Lote;
 import com.frescuratotal.erp.sales.model.VentaRegistrada;
@@ -77,10 +78,11 @@ public class VentasDao {
 
     // Registrada -> En Preparacion. Solo cambia si la venta sigue Registrada (no pisa otros estados).
     public boolean pasarAPreparacion(int idVenta) throws SQLException {
-        String sql = "UPDATE ventas SET id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = 'En Preparacion') "
+        String sql = "UPDATE ventas SET id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = ?) "
                 + "WHERE id_venta = ? AND id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = 'Registrada')";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setInt(1, idVenta);
+            ps.setString(1, EstadoVenta.IN_PREPARATION.valorBd());
+            ps.setInt(2, idVenta);
             return ps.executeUpdate() == 1;
         }
     }
