@@ -93,6 +93,29 @@ public class LogisticaDao {
         }
     }
 
+    public boolean actualizarVehiculo(int idVehiculo, String placa, String modelo, BigDecimal capacidad)
+            throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement(
+                "UPDATE vehiculos SET placa = ?, modelo = ?, capacidad = ? WHERE id_vehiculo = ?")) {
+            ps.setString(1, placa);
+            ps.setString(2, modelo);
+            ps.setBigDecimal(3, capacidad);
+            ps.setInt(4, idVehiculo);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean vehiculoTieneAsignaciones(int idVehiculo) throws SQLException {
+        return existe("SELECT 1 FROM asignaciones_entrega WHERE id_vehiculo = ?", idVehiculo);
+    }
+
+    public boolean eliminarVehiculo(int idVehiculo) throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement("DELETE FROM vehiculos WHERE id_vehiculo = ?")) {
+            ps.setInt(1, idVehiculo);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean cambiarEstadoVehiculo(int idVehiculo, EstadoVehiculo estado) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement("UPDATE vehiculos SET estado = ? WHERE id_vehiculo = ?")) {
             ps.setString(1, estado.valorBd());
@@ -138,6 +161,30 @@ public class LogisticaDao {
         }
     }
 
+    public boolean actualizarConductor(int idConductor, String nombre, String licencia, String telefono, String email)
+            throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement(
+                "UPDATE conductores SET nombre = ?, numero_licencia = ?, telefono = ?, email = ? WHERE id_conductor = ?")) {
+            ps.setString(1, nombre);
+            ps.setString(2, licencia);
+            ps.setString(3, telefono);
+            ps.setString(4, email);
+            ps.setInt(5, idConductor);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean conductorTieneAsignaciones(int idConductor) throws SQLException {
+        return existe("SELECT 1 FROM asignaciones_entrega WHERE id_conductor = ?", idConductor);
+    }
+
+    public boolean eliminarConductor(int idConductor) throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement("DELETE FROM conductores WHERE id_conductor = ?")) {
+            ps.setInt(1, idConductor);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean cambiarActivoConductor(int idConductor, boolean activo) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement("UPDATE conductores SET activo = ? WHERE id_conductor = ?")) {
             ps.setBoolean(1, activo);
@@ -178,27 +225,58 @@ public class LogisticaDao {
         }
     }
 
+    public boolean actualizarRuta(int idRuta, String nombreRuta, Timestamp salidaEstimada, Timestamp llegadaEstimada)
+            throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement(
+                "UPDATE rutas_entrega SET nombre_ruta = ?, hora_salida_estimada = ?, hora_llegada_estimada = ? "
+                + "WHERE id_ruta = ?")) {
+            ps.setString(1, nombreRuta);
+            ps.setTimestamp(2, salidaEstimada);
+            ps.setTimestamp(3, llegadaEstimada);
+            ps.setInt(4, idRuta);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // Una ruta no se borra: se cancela y conserva su historial. Sus ventas quedan libres para otra ruta.
+    public void cancelarRuta(int idRuta) throws SQLException {
+        ejecutarEnTransaccion(() -> {
+            cambiarEstadoRuta("UPDATE rutas_entrega SET estado = ? WHERE id_ruta = ? AND estado = ?",
+                    EstadoRuta.CANCELADA, idRuta, EstadoRuta.PLANIFICADA);
+            try (PreparedStatement ps = conexion.prepareStatement("DELETE FROM ventas_ruta WHERE id_ruta = ?")) {
+                ps.setInt(1, idRuta);
+                ps.executeUpdate();
+            }
+        });
+    }
+
     public boolean rutaTieneAsignacion(int idRuta) throws SQLException {
         return existe("SELECT 1 FROM asignaciones_entrega WHERE id_ruta = ?", idRuta);
     }
 
     // Un vehículo (o conductor) está ocupado si está en otra ruta que aún no termina.
-    public boolean vehiculoOcupado(int idVehiculo) throws SQLException {
+    // idRutaExcluida es la ruta que se está editando (use 0 para no excluir ninguna).
+    public boolean vehiculoOcupado(int idVehiculo, int idRutaExcluida) throws SQLException {
         return existe("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
-                + "WHERE a.id_vehiculo = ? AND r.estado IN ('Planificada', 'En Transito')", idVehiculo);
+                + "WHERE a.id_vehiculo = ? AND a.id_ruta <> ? AND r.estado IN ('Planificada', 'En Transito')",
+                idVehiculo, idRutaExcluida);
     }
 
-    public boolean conductorOcupado(int idConductor) throws SQLException {
+    public boolean conductorOcupado(int idConductor, int idRutaExcluida) throws SQLException {
         return existe("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
-                + "WHERE a.id_conductor = ? AND r.estado IN ('Planificada', 'En Transito')", idConductor);
+                + "WHERE a.id_conductor = ? AND a.id_ruta <> ? AND r.estado IN ('Planificada', 'En Transito')",
+                idConductor, idRutaExcluida);
     }
 
-    public void insertarAsignacion(int idRuta, int idVehiculo, int idConductor) throws SQLException {
-        try (PreparedStatement ps = conexion.prepareStatement(
-                "INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor) VALUES (?, ?, ?)")) {
-            ps.setInt(1, idRuta);
-            ps.setInt(2, idVehiculo);
-            ps.setInt(3, idConductor);
+    // Si la ruta ya tenía vehículo y conductor, se cambian; si no, se crea la asignación.
+    public void guardarAsignacion(int idRuta, int idVehiculo, int idConductor) throws SQLException {
+        String sql = rutaTieneAsignacion(idRuta)
+                ? "UPDATE asignaciones_entrega SET id_vehiculo = ?, id_conductor = ? WHERE id_ruta = ?"
+                : "INSERT INTO asignaciones_entrega (id_vehiculo, id_conductor, id_ruta) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setInt(1, idVehiculo);
+            ps.setInt(2, idConductor);
+            ps.setInt(3, idRuta);
             ps.executeUpdate();
         }
     }
@@ -254,6 +332,16 @@ public class LogisticaDao {
         }
     }
 
+    // Solo se quitan ventas que aún no fueron entregadas.
+    public boolean quitarVentaDeRuta(int idRuta, int idVenta) throws SQLException {
+        try (PreparedStatement ps = conexion.prepareStatement(
+                "DELETE FROM ventas_ruta WHERE id_ruta = ? AND id_venta = ? AND fecha_entrega IS NULL")) {
+            ps.setInt(1, idRuta);
+            ps.setInt(2, idVenta);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public List<EntregaRuta> listarEntregas(int idRuta) throws SQLException {
         String sql = "SELECT vr.id_venta, v.numero_venta, vr.orden_entrega, vr.direccion_destino, "
                 + "vr.fecha_entrega, vr.recibido_por, vr.observaciones "
@@ -280,7 +368,7 @@ public class LogisticaDao {
     // Si alguna venta ya no está en preparación, se revierte todo.
     public void iniciarDespacho(int idRuta) throws SQLException {
         ejecutarEnTransaccion(() -> {
-            actualizarRuta("UPDATE rutas_entrega SET estado = ?, hora_salida_real = NOW() "
+            cambiarEstadoRuta("UPDATE rutas_entrega SET estado = ?, hora_salida_real = NOW() "
                     + "WHERE id_ruta = ? AND estado = ?", EstadoRuta.EN_TRANSITO, idRuta, EstadoRuta.PLANIFICADA);
 
             String sql = "UPDATE ventas SET id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = ?) "
@@ -335,7 +423,7 @@ public class LogisticaDao {
             if (existe("SELECT 1 FROM ventas_ruta WHERE id_ruta = ? AND fecha_entrega IS NULL", idRuta)) {
                 return;
             }
-            actualizarRuta("UPDATE rutas_entrega SET estado = ?, hora_llegada_real = NOW() "
+            cambiarEstadoRuta("UPDATE rutas_entrega SET estado = ?, hora_llegada_real = NOW() "
                     + "WHERE id_ruta = ? AND estado = ?", EstadoRuta.COMPLETADA, idRuta, EstadoRuta.EN_TRANSITO);
             rutaCompletada[0] = true;
         });
@@ -365,7 +453,7 @@ public class LogisticaDao {
     }
 
     // Cambia el estado de una ruta solo si está en el estado esperado (así detecta cambios simultáneos).
-    private void actualizarRuta(String sql, EstadoRuta nuevo, int idRuta, EstadoRuta esperado) throws SQLException {
+    private void cambiarEstadoRuta(String sql, EstadoRuta nuevo, int idRuta, EstadoRuta esperado) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setString(1, nuevo.valorBd());
             ps.setInt(2, idRuta);
@@ -386,10 +474,12 @@ public class LogisticaDao {
         }
     }
 
-    // Consulta con un solo parámetro entero: true si devuelve al menos una fila.
-    private boolean existe(String sql, int parametro) throws SQLException {
+    // Consulta con parámetros enteros: true si devuelve al menos una fila.
+    private boolean existe(String sql, int... parametros) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setInt(1, parametro);
+            for (int i = 0; i < parametros.length; i++) {
+                ps.setInt(i + 1, parametros[i]);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }

@@ -2,7 +2,10 @@ package com.frescuratotal.erp.logistics.view;
 
 import com.frescuratotal.erp.logistics.controller.ControladorLogistica;
 import com.frescuratotal.erp.logistics.dao.LogisticaDao;
+import com.frescuratotal.erp.logistics.model.Conductor;
 import com.frescuratotal.erp.logistics.model.EstadoVehiculo;
+import com.frescuratotal.erp.logistics.model.Ruta;
+import com.frescuratotal.erp.logistics.model.Vehiculo;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -29,10 +32,10 @@ public class MenuLogistica {
         while (true) {
             System.out.println("\n--- Logística ---");
             System.out.println("1. Ventas en preparación");
-            System.out.println("2. Vehículos: 21 Listar  22 Crear  23 Cambiar estado");
-            System.out.println("3. Conductores: 31 Listar  32 Crear  33 Activar/desactivar");
-            System.out.println("4. Rutas: 41 Listar  42 Crear  43 Ver ventas de una ruta");
-            System.out.println("5. Asignar: 51 Vehículo y conductor a ruta  52 Venta a ruta");
+            System.out.println("2. Vehículos: 21 Listar  22 Crear  23 Cambiar estado  24 Editar  25 Eliminar");
+            System.out.println("3. Conductores: 31 Listar  32 Crear  33 Activar/desactivar  34 Editar  35 Eliminar");
+            System.out.println("4. Rutas: 41 Listar  42 Crear  43 Ver ventas  44 Editar  45 Cancelar");
+            System.out.println("5. Asignar: 51 Vehículo y conductor a ruta  52 Venta a ruta  53 Quitar venta de ruta");
             System.out.println("6. Despacho: 61 Iniciar despacho  62 Confirmar entrega");
             System.out.println("0. Volver");
             String opcion = preguntar("Opción");
@@ -68,6 +71,18 @@ public class MenuLogistica {
                 controlador.cambiarEstadoVehiculo(id, preguntarEstadoVehiculo());
                 System.out.println("Estado del vehículo actualizado.");
             }
+            case "24" -> {
+                // Enter en un campo conserva su valor actual.
+                Vehiculo v = controlador.obtenerVehiculo(leerEntero(preguntar("Id del vehículo")));
+                controlador.actualizarVehiculo(v.idVehiculo(), conservar("Placa", v.placa()),
+                        conservar("Modelo", v.modelo()),
+                        leerDecimalOpcional(conservar("Capacidad", v.capacidad() == null ? "" : v.capacidad().toPlainString())));
+                System.out.println("Vehículo actualizado.");
+            }
+            case "25" -> {
+                controlador.eliminarVehiculo(leerEntero(preguntar("Id del vehículo")));
+                System.out.println("Vehículo eliminado.");
+            }
             case "31" -> controlador.listarConductores().forEach(c -> System.out.printf(
                     "#%d | %s | licencia: %s | tel: %s | %s%n", c.idConductor(), c.nombre(), c.numeroLicencia(),
                     c.telefono(), c.activo() ? "Activo" : "Inactivo"));
@@ -81,6 +96,17 @@ public class MenuLogistica {
                 boolean activo = preguntar("¿Activo? (s/n)").equalsIgnoreCase("s");
                 controlador.cambiarActivoConductor(id, activo);
                 System.out.println("Conductor actualizado.");
+            }
+            case "34" -> {
+                Conductor c = controlador.obtenerConductor(leerEntero(preguntar("Id del conductor")));
+                controlador.actualizarConductor(c.idConductor(), conservar("Nombre", c.nombre()),
+                        conservar("Número de licencia", c.numeroLicencia()), conservar("Teléfono", c.telefono()),
+                        conservar("Correo", c.email()));
+                System.out.println("Conductor actualizado.");
+            }
+            case "35" -> {
+                controlador.eliminarConductor(leerEntero(preguntar("Id del conductor")));
+                System.out.println("Conductor eliminado.");
             }
             case "41" -> controlador.listarRutas().forEach(r -> System.out.printf(
                     "#%d | %s | %s | vehículo: %s | conductor: %s | salida estimada: %s%n", r.idRuta(),
@@ -97,6 +123,17 @@ public class MenuLogistica {
                             e.ordenEntrega(), e.idVenta(), e.numeroVenta(), e.direccionDestino(),
                             e.fechaEntrega() == null ? "pendiente" : e.fechaEntrega(), e.recibidoPor(),
                             e.observaciones()));
+            case "44" -> {
+                Ruta r = controlador.obtenerRuta(leerEntero(preguntar("Id de la ruta")));
+                controlador.actualizarRuta(r.idRuta(), conservar("Nombre de la ruta", r.nombreRuta()),
+                        leerFechaOpcional(conservar("Salida estimada aaaa-MM-dd HH:mm", formatoFecha(r.salidaEstimada()))),
+                        leerFechaOpcional(conservar("Llegada estimada aaaa-MM-dd HH:mm", formatoFecha(r.llegadaEstimada()))));
+                System.out.println("Ruta actualizada.");
+            }
+            case "45" -> {
+                controlador.cancelarRuta(leerEntero(preguntar("Id de la ruta")));
+                System.out.println("Ruta cancelada. Sus ventas quedaron libres para asignarlas a otra ruta.");
+            }
             case "51" -> {
                 controlador.asignarVehiculoYConductor(leerEntero(preguntar("Id de la ruta")),
                         leerEntero(preguntar("Id del vehículo")), leerEntero(preguntar("Id del conductor")));
@@ -109,6 +146,11 @@ public class MenuLogistica {
                 String direccion = preguntar("Dirección de destino (Enter = la del cliente)");
                 controlador.asignarVenta(idRuta, idVenta, orden.isEmpty() ? null : leerEntero(orden), direccion);
                 System.out.println("Venta asignada a la ruta.");
+            }
+            case "53" -> {
+                controlador.quitarVentaDeRuta(leerEntero(preguntar("Id de la ruta")),
+                        leerEntero(preguntar("Id de la venta")));
+                System.out.println("Venta quitada de la ruta.");
             }
             case "61" -> {
                 controlador.iniciarDespacho(leerEntero(preguntar("Id de la ruta")));
@@ -164,6 +206,17 @@ public class MenuLogistica {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Fecha no válida. Use el formato aaaa-MM-dd HH:mm.");
         }
+    }
+
+    // Muestra el valor actual; si el usuario solo pulsa Enter, se conserva.
+    private String conservar(String etiqueta, String actual) {
+        String texto = preguntar(etiqueta + " [" + (actual == null ? "" : actual) + "]");
+        return texto.isEmpty() ? (actual == null ? "" : actual) : texto;
+    }
+
+    // Formato aaaa-MM-dd HH:mm que acepta leerFechaOpcional.
+    private static String formatoFecha(Timestamp fecha) {
+        return fecha == null ? "" : fecha.toLocalDateTime().toString().replace('T', ' ').substring(0, 16);
     }
 
     private String preguntar(String etiqueta) {
