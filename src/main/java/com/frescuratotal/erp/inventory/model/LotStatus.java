@@ -9,16 +9,24 @@ package com.frescuratotal.erp.inventory.model;
  * @author admin
  */
 public enum LotStatus {
-    AVAILABLE(1),
-    NEAR_EXPIRY(2),
-    EXPIRED(3),
-    IN_QUARANTINE(4),
-    REJECTED(5);
+    AVAILABLE(1, "Disponible"),
+    NEAR_EXPIRY(2, "Proximo a vencer"),
+    EXPIRED(3, "Vencido"),
+    IN_QUARANTINE(4, "En cuarentena"),
+    REJECTED(5, "Rechazado");
 
     private final int id;
+    private final String etiqueta;
 
-    LotStatus(int id) {
+    LotStatus(int id, String etiqueta) {
         this.id = id;
+        this.etiqueta = etiqueta;
+    }
+
+    // Texto en espanol que ve la persona usuaria.
+    @Override
+    public String toString() {
+        return etiqueta;
     }
 
     public int getId() {
@@ -32,6 +40,6 @@ public enum LotStatus {
                 return status;
             }
         }
-        throw new IllegalArgumentException("Id del lot status desconocido!!: " + id);
+        throw new IllegalArgumentException("Estado de lote desconocido: " + id);
     }
 }

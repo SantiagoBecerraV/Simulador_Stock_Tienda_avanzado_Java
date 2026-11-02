@@ -321,14 +321,19 @@ public class LogisticaDao {
         }
     }
 
+    // El NOT EXISTS evita que una venta quede en dos rutas aunque dos personas asignen a la vez.
     public void insertarVentaEnRuta(int idRuta, int idVenta, int orden, String direccionDestino) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement(
-                "INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino) VALUES (?, ?, ?, ?)")) {
+                "INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino) "
+                + "SELECT ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ventas_ruta WHERE id_venta = ?)")) {
             ps.setInt(1, idRuta);
             ps.setInt(2, idVenta);
             ps.setInt(3, orden);
             ps.setString(4, direccionDestino);
-            ps.executeUpdate();
+            ps.setInt(5, idVenta);
+            if (ps.executeUpdate() == 0) {
+                throw new IllegalArgumentException("La venta " + idVenta + " ya esta asignada a una ruta.");
+            }
         }
     }
 

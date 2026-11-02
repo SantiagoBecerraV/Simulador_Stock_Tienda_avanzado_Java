@@ -26,7 +26,7 @@ public class CustomerController {
 
     public Customer get(int customerId) throws SQLException {
         return dao.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("No customer with id " + customerId + "."));
+                .orElseThrow(() -> new IllegalArgumentException("No existe un cliente con id " + customerId + "."));
     }
 
     public Map<Integer, String> types() throws SQLException {
@@ -46,7 +46,7 @@ public class CustomerController {
         validate(c);
         try {
             if (!dao.update(clean(c))) {
-                throw new IllegalArgumentException("No customer with id " + c.customerId() + ".");
+                throw new IllegalArgumentException("No existe un cliente con id " + c.customerId() + ".");
             }
         } catch (SQLException e) {
             throw translate(e, c.document());
@@ -55,22 +55,22 @@ public class CustomerController {
 
     public void delete(int customerId) throws SQLException {
         if (dao.hasSales(customerId)) {
-            throw new IllegalArgumentException("Cannot delete: this customer has related sales.");
+            throw new IllegalArgumentException("No se puede eliminar: el cliente tiene ventas.");
         }
         if (!dao.delete(customerId)) {
-            throw new IllegalArgumentException("No customer with id " + customerId + ".");
+            throw new IllegalArgumentException("No existe un cliente con id " + customerId + ".");
         }
     }
 
     private void validate(Customer c) throws SQLException {
         if (isBlank(c.name())) {
-            throw new IllegalArgumentException("Name is required.");
+            throw new IllegalArgumentException("El nombre es obligatorio.");
         }
         if (isBlank(c.document())) {
-            throw new IllegalArgumentException("Document is required.");
+            throw new IllegalArgumentException("El documento es obligatorio.");
         }
         if (!dao.findTypes().containsKey(c.typeId())) {
-            throw new IllegalArgumentException("Invalid customer type.");
+            throw new IllegalArgumentException("Tipo de cliente no valido.");
         }
     }
 
@@ -83,7 +83,7 @@ public class CustomerController {
 
     private SQLException translate(SQLException e, String document) {
         if (e.getErrorCode() == MYSQL_DUPLICATE_ENTRY) {
-            throw new IllegalArgumentException("A customer with document '" + document + "' already exists.");
+            throw new IllegalArgumentException("Ya existe un cliente con el documento '" + document + "'.");
         }
         return e;
     }

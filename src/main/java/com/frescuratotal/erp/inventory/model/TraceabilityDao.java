@@ -62,13 +62,13 @@ public class TraceabilityDao {
 
     // Todo lo ocurrido con un lote, en orden cronológico: cuarentena, inspecciones y merma
     public List<String> findLotHistory(int lotId) throws SQLException {
-        String sql = "SELECT CONCAT('Quarantine: ', motivo, ' por ', usuario, ' rl ', fecha_registro) AS event, "
+        String sql = "SELECT CONCAT('Cuarentena: ', motivo, ' por ', usuario, ' el ', fecha_registro) AS event, "
                    + "fecha_registro AS moment FROM registro_cuarentena WHERE id_lote = ? "
                    + "UNION ALL "
-                   + "SELECT CONCAT('Inspection: ', resultado, ' por ', nombre_inspector, ' el ', fecha_inspeccion), "
+                   + "SELECT CONCAT('Inspeccion: ', resultado, ' por ', nombre_inspector, ' el ', fecha_inspeccion), "
                    + "fecha_inspeccion FROM inspecciones_calidad WHERE id_lote = ? "
                    + "UNION ALL "
-                   + "SELECT CONCAT('Waste: ', cantidad_perdida, ' units, ', motivo, ' por ', usuario_registro, "
+                   + "SELECT CONCAT('Merma: ', cantidad_perdida, ' unidades, ', motivo, ' por ', usuario_registro, "
                    + "' el ', fecha_registro), fecha_registro FROM registro_mermas WHERE id_lote = ? "
                    + "ORDER BY moment";
         List<String> lines = new ArrayList<>();

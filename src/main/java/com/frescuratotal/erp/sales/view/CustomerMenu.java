@@ -24,9 +24,9 @@ public class CustomerMenu {
 
     public void run() {
         while (true) {
-            System.out.println("\n--- Customers ---");
-            System.out.println("1. List  2. Find by ID  3. Create  4. Update  5. Delete  0. Back");
-            String option = ask("Option");
+            System.out.println("\n--- Clientes ---");
+            System.out.println("1. Listar  2. Buscar por id  3. Crear  4. Actualizar  5. Eliminar  0. Volver");
+            String option = ask("Opcion");
             if (option.equals("0")) {
                 return;
             }
@@ -37,43 +37,43 @@ public class CustomerMenu {
                     case "3" -> create();
                     case "4" -> update();
                     case "5" -> delete();
-                    default -> System.out.println("Invalid option.");
+                    default -> System.out.println("Opcion no valida.");
                 }
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
             } catch (SQLException e) {
-                System.out.println("Database error: " + e.getMessage());
+                System.out.println("Error de base de datos: " + e.getMessage());
             }
         }
     }
 
     private void create() throws SQLException {
-        String name = ask("Name");
-        String document = ask("Document");
-        String email = ask("Email (optional)");
-        String phone = ask("Phone (optional)");
-        String address = ask("Address (optional)");
+        String name = ask("Nombre");
+        String document = ask("Documento");
+        String email = ask("Correo (opcional)");
+        String phone = ask("Telefono (opcional)");
+        String address = ask("Direccion (opcional)");
         int typeId = askType();
         controller.create(new Customer(0, name, document, email, phone, address, typeId, null, null));
-        System.out.println("Customer created.");
+        System.out.println("Cliente creado.");
     }
 
     // Enter en cualquier campo conserva su valor actual.
     private void update() throws SQLException {
         Customer old = controller.get(askId());
-        String name = askKeep("Name", old.name());
-        String document = askKeep("Document", old.document());
-        String email = askKeep("Email", old.email());
-        String phone = askKeep("Phone", old.phone());
-        String address = askKeep("Address", old.address());
+        String name = askKeep("Nombre", old.name());
+        String document = askKeep("Documento", old.document());
+        String email = askKeep("Correo", old.email());
+        String phone = askKeep("Telefono", old.phone());
+        String address = askKeep("Direccion", old.address());
         int typeId = askType(old.typeId());
         controller.update(new Customer(old.customerId(), name, document, email, phone, address, typeId, null, null));
-        System.out.println("Customer updated.");
+        System.out.println("Cliente actualizado.");
     }
 
     private void delete() throws SQLException {
         controller.delete(askId());
-        System.out.println("Customer deleted.");
+        System.out.println("Cliente eliminado.");
     }
 
     private int askType() throws SQLException {
@@ -83,7 +83,7 @@ public class CustomerMenu {
     private int askType(int current) throws SQLException {
         Map<Integer, String> types = controller.types();
         types.forEach((id, name) -> System.out.println("  " + id + " = " + name));
-        String text = ask("Type id" + (current > 0 ? " (Enter keeps " + current + ")" : ""));
+        String text = ask("Id del tipo" + (current > 0 ? " (Enter conserva " + current + ")" : ""));
         if (text.isEmpty() && current > 0) {
             return current;
         }
@@ -91,14 +91,14 @@ public class CustomerMenu {
     }
 
     private int askId() {
-        return parseInt(ask("Customer id"));
+        return parseInt(ask("Id del cliente"));
     }
 
     private static int parseInt(String text) {
         try {
             return Integer.parseInt(text.trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("'" + text + "' is not a valid number.");
+            throw new IllegalArgumentException("'" + text + "' no es un numero valido.");
         }
     }
 
@@ -113,7 +113,7 @@ public class CustomerMenu {
     }
 
     private static void print(Customer c) {
-        System.out.printf("#%d | %s | doc: %s | %s | email: %s | phone: %s | address: %s | registered: %s%n",
+        System.out.printf("#%d | %s | documento: %s | %s | correo: %s | telefono: %s | direccion: %s | registro: %s%n",
                 c.customerId(), c.name(), c.document(), c.typeName(),
                 c.email(), c.phone(), c.address(), c.registrationDate());
     }

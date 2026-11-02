@@ -36,7 +36,7 @@ public class QualityDao {
                 changedRows = statement.executeUpdate();
             }
             if (changedRows == 0) {
-                throw new IllegalArgumentException("Lot not found, or its status does not allow quarantine");
+                throw new IllegalArgumentException("El lote no existe o su estado no permite la cuarentena");
             }
 
             String insertSql = "INSERT INTO registro_cuarentena (id_lote, motivo, usuario) VALUES (?, ?, ?)";

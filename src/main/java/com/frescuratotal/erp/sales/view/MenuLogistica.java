@@ -32,32 +32,65 @@ public class MenuLogistica {
         while (true) {
             System.out.println("\n--- Logistica ---");
             System.out.println("1. Ventas en preparacion");
-            System.out.println("2. Vehiculos: 21 Listar  22 Crear  23 Cambiar estado  24 Editar  25 Eliminar");
-            System.out.println("3. Conductores: 31 Listar  32 Crear  33 Activar/desactivar  34 Editar  35 Eliminar");
-            System.out.println("4. Rutas: 41 Listar  42 Crear  43 Ver ventas  44 Editar  45 Cancelar");
-            System.out.println("5. Asignar: 51 Vehiculo y conductor a ruta  52 Venta a ruta  53 Quitar venta de ruta");
-            System.out.println("6. Despacho: 61 Iniciar despacho  62 Confirmar entrega");
+            System.out.println("2. Vehiculos");
+            System.out.println("3. Conductores");
+            System.out.println("4. Rutas");
+            System.out.println("5. Asignaciones");
+            System.out.println("6. Despacho y entregas");
+            System.out.println("0. Volver");
+            switch (preguntar("Opcion")) {
+                case "0" -> {
+                    return;
+                }
+                case "1" -> ejecutarSeguro("1");
+                case "2" -> submenu("Vehiculos", "2", "Listar", "Crear", "Cambiar estado", "Editar", "Eliminar");
+                case "3" -> submenu("Conductores", "3", "Listar", "Crear", "Activar/desactivar", "Editar", "Eliminar");
+                case "4" -> submenu("Rutas", "4", "Listar", "Crear", "Ver ventas", "Editar", "Cancelar");
+                case "5" -> submenu("Asignaciones", "5", "Asignar vehiculo y conductor a ruta",
+                        "Asignar venta a ruta", "Quitar venta de ruta");
+                case "6" -> submenu("Despacho y entregas", "6", "Iniciar despacho", "Confirmar entrega");
+                default -> System.out.println("Opcion no valida.");
+            }
+        }
+    }
+
+    // Submenu simple: la opcion N de la lista ejecuta el codigo interno prefijo + N (por ejemplo "2" + "1" = "21").
+    private void submenu(String titulo, String prefijo, String... opciones) {
+        while (true) {
+            System.out.println("\n--- " + titulo + " ---");
+            for (int i = 0; i < opciones.length; i++) {
+                System.out.println((i + 1) + ". " + opciones[i]);
+            }
             System.out.println("0. Volver");
             String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;
             }
-            try {
-                ejecutarOpcion(opcion);
-            } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
-            } catch (SQLException e) {
-                System.out.println("Error de base de datos: " + e.getMessage());
+            boolean valida = opcion.matches("[1-9]") && Integer.parseInt(opcion) <= opciones.length;
+            if (valida) {
+                ejecutarSeguro(prefijo + opcion);
+            } else {
+                System.out.println("Opcion no valida.");
             }
+        }
+    }
+
+    private void ejecutarSeguro(String codigo) {
+        try {
+            ejecutarOpcion(codigo);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Error de base de datos: " + e.getMessage());
         }
     }
 
     private void ejecutarOpcion(String opcion) throws SQLException {
         switch (opcion) {
             case "1" -> controlador.listarVentasEnPreparacion().forEach(v -> System.out.printf(
-                    "#%d | %s | cliente: %s | direccion: %s | total $%s | ruta: %s%n", v.idVenta(),
+                    "#%d | %s | cliente: %s | direccion: %s | total $%s | %s%n", v.idVenta(),
                     v.numeroVenta(), v.cliente(), v.direccion(), v.montoTotal(),
-                    v.idRuta() == null ? "sin asignar" : v.idRuta()));
+                    v.idRuta() == null ? "sin ruta asignada" : "ya asignada a la ruta #" + v.idRuta()));
             case "21" -> controlador.listarVehiculos().forEach(v -> System.out.printf(
                     "#%d | %s | %s | capacidad: %s | %s%n", v.idVehiculo(), v.placa(), v.modelo(),
                     v.capacidad(), v.estado().valorBd()));
