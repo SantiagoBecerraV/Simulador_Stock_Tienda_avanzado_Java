@@ -1,10 +1,35 @@
 -- Datos de prueba: clientes, ventas, detalles de venta, vehículos, conductores, rutas y asignaciones.
 -- Datos ficticios. NO crea ni borra la base: ejecutar sobre erp_frescura_total ya creada con el script del proyecto.
--- Se puede ejecutar más de una vez: los registros se identifican por claves únicas (documento, numero_venta,
--- placa, numero_licencia, nombre_ruta) y no se duplican.
--- Requisito de integración: los detalles de venta toman lotes de lotes_inventario (módulo de inventario).
--- Hace falta al menos 1 lote cargado; si no hay lotes, las ventas quedan sin detalles y con total 0.
+--
+-- ORDEN DE CARGA (dependencias entre módulos):
+--   1. Script del proyecto (esquema y catálogos).
+--   2. SQL de productos y lotes del módulo de Inventario (de su compañero). Este script NO crea productos,
+--      proveedores ni lotes: los detalles de venta usan los lotes que ya existan en lotes_inventario.
+--   3. Este script. Si no hay lotes, se detiene al inicio con un error y no inserta nada.
+--
+-- Proveedor ID 33: para estos datos de prueba se espera que el proveedor 33 tenga el NIT ficticio 985731642-9
+-- (dato inventado solo para pruebas; no es un NIT registrado ni asignado por la DIAN). Este script no crea ni
+-- modifica proveedores: lo carga el módulo de Proveedores/Inventario. Al final se muestra si coincide.
+--
+-- Se puede ejecutar más de una vez sin duplicar datos. Cada registro se identifica por una clave propia, nunca
+-- por un id autogenerado: documento, numero_venta, placa, numero_licencia y, en las rutas, el código
+-- 'RT-TEST-nn' en nombre_ruta junto con usuario_creacion = 'datos_prueba'.
+-- Requiere el cliente mysql o Workbench (usa DELIMITER para el procedimiento temporal de la comprobación).
 USE erp_frescura_total;
+
+-- 0. COMPROBACIÓN: sin lotes no se crean ventas incompletas.
+DROP PROCEDURE IF EXISTS sp_verificar_lotes_prueba;
+DELIMITER $$
+CREATE PROCEDURE sp_verificar_lotes_prueba()
+BEGIN
+  IF (SELECT COUNT(*) FROM lotes_inventario) = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT =
+      'Faltan lotes: cargue primero el SQL de productos y lotes de Inventario y ejecute de nuevo este script.';
+  END IF;
+END$$
+DELIMITER ;
+CALL sp_verificar_lotes_prueba();
+DROP PROCEDURE sp_verificar_lotes_prueba;
 
 -- 1. CLIENTES (50)
 INSERT IGNORE INTO clientes (nombre, documento, email, telefono, direccion, id_tipo) VALUES
@@ -341,201 +366,201 @@ INSERT IGNORE INTO conductores (nombre, numero_licencia, telefono, email, activo
 -- 7. RUTAS (50). Rutas 1-5 Completada, 6-7 En Transito, 8-9 Planificada con vehículo, conductor y ventas,
 -- 10-48 Planificada vacías (sirven para practicar las asignaciones), 49-50 Cancelada.
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 01 - Sur', 'datos_prueba', '2026-09-01 07:00:00', '2026-09-01 15:00:00', '2026-09-01 07:00:00', '2026-09-01 14:30:00', 'Completada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 01 - Sur');
+SELECT 'RT-TEST-01 Sur', 'datos_prueba', '2026-09-01 07:00:00', '2026-09-01 15:00:00', '2026-09-01 07:00:00', '2026-09-01 14:30:00', 'Completada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-01 Sur' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 02 - Occidente', 'datos_prueba', '2026-09-02 07:00:00', '2026-09-02 15:00:00', '2026-09-02 07:00:00', '2026-09-02 14:30:00', 'Completada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 02 - Occidente');
+SELECT 'RT-TEST-02 Occidente', 'datos_prueba', '2026-09-02 07:00:00', '2026-09-02 15:00:00', '2026-09-02 07:00:00', '2026-09-02 14:30:00', 'Completada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-02 Occidente' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 03 - Centro', 'datos_prueba', '2026-09-03 07:00:00', '2026-09-03 15:00:00', '2026-09-03 07:00:00', '2026-09-03 14:30:00', 'Completada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 03 - Centro');
+SELECT 'RT-TEST-03 Centro', 'datos_prueba', '2026-09-03 07:00:00', '2026-09-03 15:00:00', '2026-09-03 07:00:00', '2026-09-03 14:30:00', 'Completada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-03 Centro' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 04 - Chapinero', 'datos_prueba', '2026-09-04 07:00:00', '2026-09-04 15:00:00', '2026-09-04 07:00:00', '2026-09-04 14:30:00', 'Completada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 04 - Chapinero');
+SELECT 'RT-TEST-04 Chapinero', 'datos_prueba', '2026-09-04 07:00:00', '2026-09-04 15:00:00', '2026-09-04 07:00:00', '2026-09-04 14:30:00', 'Completada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-04 Chapinero' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 05 - Kennedy', 'datos_prueba', '2026-09-05 07:00:00', '2026-09-05 15:00:00', '2026-09-05 07:00:00', '2026-09-05 14:30:00', 'Completada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 05 - Kennedy');
+SELECT 'RT-TEST-05 Kennedy', 'datos_prueba', '2026-09-05 07:00:00', '2026-09-05 15:00:00', '2026-09-05 07:00:00', '2026-09-05 14:30:00', 'Completada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-05 Kennedy' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 06 - Suba', 'datos_prueba', '2026-09-06 07:00:00', '2026-09-06 15:00:00', '2026-09-06 07:00:00', NULL, 'En Transito'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 06 - Suba');
+SELECT 'RT-TEST-06 Suba', 'datos_prueba', '2026-09-06 07:00:00', '2026-09-06 15:00:00', '2026-09-06 07:00:00', NULL, 'En Transito'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-06 Suba' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 07 - Fontibón', 'datos_prueba', '2026-09-07 07:00:00', '2026-09-07 15:00:00', '2026-09-07 07:00:00', NULL, 'En Transito'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 07 - Fontibón');
+SELECT 'RT-TEST-07 Fontibón', 'datos_prueba', '2026-09-07 07:00:00', '2026-09-07 15:00:00', '2026-09-07 07:00:00', NULL, 'En Transito'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-07 Fontibón' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 08 - Engativá', 'datos_prueba', '2026-09-08 07:00:00', '2026-09-08 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 08 - Engativá');
+SELECT 'RT-TEST-08 Engativá', 'datos_prueba', '2026-09-08 07:00:00', '2026-09-08 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-08 Engativá' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 09 - Usaquén', 'datos_prueba', '2026-09-09 07:00:00', '2026-09-09 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 09 - Usaquén');
+SELECT 'RT-TEST-09 Usaquén', 'datos_prueba', '2026-09-09 07:00:00', '2026-09-09 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-09 Usaquén' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 10 - Norte', 'datos_prueba', '2026-09-10 07:00:00', '2026-09-10 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 10 - Norte');
+SELECT 'RT-TEST-10 Norte', 'datos_prueba', '2026-09-10 07:00:00', '2026-09-10 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-10 Norte' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 11 - Sur', 'datos_prueba', '2026-09-11 07:00:00', '2026-09-11 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 11 - Sur');
+SELECT 'RT-TEST-11 Sur', 'datos_prueba', '2026-09-11 07:00:00', '2026-09-11 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-11 Sur' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 12 - Occidente', 'datos_prueba', '2026-09-12 07:00:00', '2026-09-12 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 12 - Occidente');
+SELECT 'RT-TEST-12 Occidente', 'datos_prueba', '2026-09-12 07:00:00', '2026-09-12 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-12 Occidente' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 13 - Centro', 'datos_prueba', '2026-09-13 07:00:00', '2026-09-13 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 13 - Centro');
+SELECT 'RT-TEST-13 Centro', 'datos_prueba', '2026-09-13 07:00:00', '2026-09-13 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-13 Centro' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 14 - Chapinero', 'datos_prueba', '2026-09-14 07:00:00', '2026-09-14 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 14 - Chapinero');
+SELECT 'RT-TEST-14 Chapinero', 'datos_prueba', '2026-09-14 07:00:00', '2026-09-14 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-14 Chapinero' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 15 - Kennedy', 'datos_prueba', '2026-09-15 07:00:00', '2026-09-15 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 15 - Kennedy');
+SELECT 'RT-TEST-15 Kennedy', 'datos_prueba', '2026-09-15 07:00:00', '2026-09-15 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-15 Kennedy' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 16 - Suba', 'datos_prueba', '2026-09-16 07:00:00', '2026-09-16 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 16 - Suba');
+SELECT 'RT-TEST-16 Suba', 'datos_prueba', '2026-09-16 07:00:00', '2026-09-16 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-16 Suba' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 17 - Fontibón', 'datos_prueba', '2026-09-17 07:00:00', '2026-09-17 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 17 - Fontibón');
+SELECT 'RT-TEST-17 Fontibón', 'datos_prueba', '2026-09-17 07:00:00', '2026-09-17 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-17 Fontibón' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 18 - Engativá', 'datos_prueba', '2026-09-18 07:00:00', '2026-09-18 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 18 - Engativá');
+SELECT 'RT-TEST-18 Engativá', 'datos_prueba', '2026-09-18 07:00:00', '2026-09-18 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-18 Engativá' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 19 - Usaquén', 'datos_prueba', '2026-09-19 07:00:00', '2026-09-19 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 19 - Usaquén');
+SELECT 'RT-TEST-19 Usaquén', 'datos_prueba', '2026-09-19 07:00:00', '2026-09-19 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-19 Usaquén' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 20 - Norte', 'datos_prueba', '2026-09-20 07:00:00', '2026-09-20 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 20 - Norte');
+SELECT 'RT-TEST-20 Norte', 'datos_prueba', '2026-09-20 07:00:00', '2026-09-20 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-20 Norte' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 21 - Sur', 'datos_prueba', '2026-09-21 07:00:00', '2026-09-21 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 21 - Sur');
+SELECT 'RT-TEST-21 Sur', 'datos_prueba', '2026-09-21 07:00:00', '2026-09-21 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-21 Sur' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 22 - Occidente', 'datos_prueba', '2026-09-22 07:00:00', '2026-09-22 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 22 - Occidente');
+SELECT 'RT-TEST-22 Occidente', 'datos_prueba', '2026-09-22 07:00:00', '2026-09-22 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-22 Occidente' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 23 - Centro', 'datos_prueba', '2026-09-23 07:00:00', '2026-09-23 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 23 - Centro');
+SELECT 'RT-TEST-23 Centro', 'datos_prueba', '2026-09-23 07:00:00', '2026-09-23 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-23 Centro' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 24 - Chapinero', 'datos_prueba', '2026-09-24 07:00:00', '2026-09-24 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 24 - Chapinero');
+SELECT 'RT-TEST-24 Chapinero', 'datos_prueba', '2026-09-24 07:00:00', '2026-09-24 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-24 Chapinero' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 25 - Kennedy', 'datos_prueba', '2026-09-25 07:00:00', '2026-09-25 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 25 - Kennedy');
+SELECT 'RT-TEST-25 Kennedy', 'datos_prueba', '2026-09-25 07:00:00', '2026-09-25 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-25 Kennedy' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 26 - Suba', 'datos_prueba', '2026-09-26 07:00:00', '2026-09-26 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 26 - Suba');
+SELECT 'RT-TEST-26 Suba', 'datos_prueba', '2026-09-26 07:00:00', '2026-09-26 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-26 Suba' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 27 - Fontibón', 'datos_prueba', '2026-09-27 07:00:00', '2026-09-27 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 27 - Fontibón');
+SELECT 'RT-TEST-27 Fontibón', 'datos_prueba', '2026-09-27 07:00:00', '2026-09-27 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-27 Fontibón' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 28 - Engativá', 'datos_prueba', '2026-09-28 07:00:00', '2026-09-28 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 28 - Engativá');
+SELECT 'RT-TEST-28 Engativá', 'datos_prueba', '2026-09-28 07:00:00', '2026-09-28 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-28 Engativá' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 29 - Usaquén', 'datos_prueba', '2026-09-01 07:00:00', '2026-09-01 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 29 - Usaquén');
+SELECT 'RT-TEST-29 Usaquén', 'datos_prueba', '2026-09-01 07:00:00', '2026-09-01 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-29 Usaquén' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 30 - Norte', 'datos_prueba', '2026-09-02 07:00:00', '2026-09-02 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 30 - Norte');
+SELECT 'RT-TEST-30 Norte', 'datos_prueba', '2026-09-02 07:00:00', '2026-09-02 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-30 Norte' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 31 - Sur', 'datos_prueba', '2026-09-03 07:00:00', '2026-09-03 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 31 - Sur');
+SELECT 'RT-TEST-31 Sur', 'datos_prueba', '2026-09-03 07:00:00', '2026-09-03 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-31 Sur' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 32 - Occidente', 'datos_prueba', '2026-09-04 07:00:00', '2026-09-04 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 32 - Occidente');
+SELECT 'RT-TEST-32 Occidente', 'datos_prueba', '2026-09-04 07:00:00', '2026-09-04 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-32 Occidente' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 33 - Centro', 'datos_prueba', '2026-09-05 07:00:00', '2026-09-05 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 33 - Centro');
+SELECT 'RT-TEST-33 Centro', 'datos_prueba', '2026-09-05 07:00:00', '2026-09-05 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-33 Centro' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 34 - Chapinero', 'datos_prueba', '2026-09-06 07:00:00', '2026-09-06 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 34 - Chapinero');
+SELECT 'RT-TEST-34 Chapinero', 'datos_prueba', '2026-09-06 07:00:00', '2026-09-06 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-34 Chapinero' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 35 - Kennedy', 'datos_prueba', '2026-09-07 07:00:00', '2026-09-07 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 35 - Kennedy');
+SELECT 'RT-TEST-35 Kennedy', 'datos_prueba', '2026-09-07 07:00:00', '2026-09-07 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-35 Kennedy' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 36 - Suba', 'datos_prueba', '2026-09-08 07:00:00', '2026-09-08 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 36 - Suba');
+SELECT 'RT-TEST-36 Suba', 'datos_prueba', '2026-09-08 07:00:00', '2026-09-08 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-36 Suba' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 37 - Fontibón', 'datos_prueba', '2026-09-09 07:00:00', '2026-09-09 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 37 - Fontibón');
+SELECT 'RT-TEST-37 Fontibón', 'datos_prueba', '2026-09-09 07:00:00', '2026-09-09 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-37 Fontibón' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 38 - Engativá', 'datos_prueba', '2026-09-10 07:00:00', '2026-09-10 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 38 - Engativá');
+SELECT 'RT-TEST-38 Engativá', 'datos_prueba', '2026-09-10 07:00:00', '2026-09-10 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-38 Engativá' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 39 - Usaquén', 'datos_prueba', '2026-09-11 07:00:00', '2026-09-11 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 39 - Usaquén');
+SELECT 'RT-TEST-39 Usaquén', 'datos_prueba', '2026-09-11 07:00:00', '2026-09-11 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-39 Usaquén' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 40 - Norte', 'datos_prueba', '2026-09-12 07:00:00', '2026-09-12 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 40 - Norte');
+SELECT 'RT-TEST-40 Norte', 'datos_prueba', '2026-09-12 07:00:00', '2026-09-12 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-40 Norte' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 41 - Sur', 'datos_prueba', '2026-09-13 07:00:00', '2026-09-13 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 41 - Sur');
+SELECT 'RT-TEST-41 Sur', 'datos_prueba', '2026-09-13 07:00:00', '2026-09-13 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-41 Sur' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 42 - Occidente', 'datos_prueba', '2026-09-14 07:00:00', '2026-09-14 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 42 - Occidente');
+SELECT 'RT-TEST-42 Occidente', 'datos_prueba', '2026-09-14 07:00:00', '2026-09-14 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-42 Occidente' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 43 - Centro', 'datos_prueba', '2026-09-15 07:00:00', '2026-09-15 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 43 - Centro');
+SELECT 'RT-TEST-43 Centro', 'datos_prueba', '2026-09-15 07:00:00', '2026-09-15 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-43 Centro' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 44 - Chapinero', 'datos_prueba', '2026-09-16 07:00:00', '2026-09-16 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 44 - Chapinero');
+SELECT 'RT-TEST-44 Chapinero', 'datos_prueba', '2026-09-16 07:00:00', '2026-09-16 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-44 Chapinero' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 45 - Kennedy', 'datos_prueba', '2026-09-17 07:00:00', '2026-09-17 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 45 - Kennedy');
+SELECT 'RT-TEST-45 Kennedy', 'datos_prueba', '2026-09-17 07:00:00', '2026-09-17 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-45 Kennedy' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 46 - Suba', 'datos_prueba', '2026-09-18 07:00:00', '2026-09-18 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 46 - Suba');
+SELECT 'RT-TEST-46 Suba', 'datos_prueba', '2026-09-18 07:00:00', '2026-09-18 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-46 Suba' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 47 - Fontibón', 'datos_prueba', '2026-09-19 07:00:00', '2026-09-19 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 47 - Fontibón');
+SELECT 'RT-TEST-47 Fontibón', 'datos_prueba', '2026-09-19 07:00:00', '2026-09-19 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-47 Fontibón' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 48 - Engativá', 'datos_prueba', '2026-09-20 07:00:00', '2026-09-20 15:00:00', NULL, NULL, 'Planificada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 48 - Engativá');
+SELECT 'RT-TEST-48 Engativá', 'datos_prueba', '2026-09-20 07:00:00', '2026-09-20 15:00:00', NULL, NULL, 'Planificada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-48 Engativá' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 49 - Usaquén', 'datos_prueba', '2026-09-21 07:00:00', '2026-09-21 15:00:00', NULL, NULL, 'Cancelada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 49 - Usaquén');
+SELECT 'RT-TEST-49 Usaquén', 'datos_prueba', '2026-09-21 07:00:00', '2026-09-21 15:00:00', NULL, NULL, 'Cancelada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-49 Usaquén' AND usuario_creacion = 'datos_prueba');
 INSERT INTO rutas_entrega (nombre_ruta, usuario_creacion, hora_salida_estimada, hora_llegada_estimada, hora_salida_real, hora_llegada_real, estado)
-SELECT 'Ruta Test 50 - Norte', 'datos_prueba', '2026-09-22 07:00:00', '2026-09-22 15:00:00', NULL, NULL, 'Cancelada'
-FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'Ruta Test 50 - Norte');
+SELECT 'RT-TEST-50 Norte', 'datos_prueba', '2026-09-22 07:00:00', '2026-09-22 15:00:00', NULL, NULL, 'Cancelada'
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rutas_entrega WHERE nombre_ruta = 'RT-TEST-50 Norte' AND usuario_creacion = 'datos_prueba');
 
 -- 8. ASIGNACIONES de vehículo y conductor a las rutas 1 a 9 (las demás quedan libres para probar la asignación).
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 01 - Sur' AND v.placa = 'TST001' AND c.numero_licencia = 'LIC-TEST-001'
+WHERE r.nombre_ruta = 'RT-TEST-01 Sur' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST001' AND c.numero_licencia = 'LIC-TEST-001'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 02 - Occidente' AND v.placa = 'TST002' AND c.numero_licencia = 'LIC-TEST-002'
+WHERE r.nombre_ruta = 'RT-TEST-02 Occidente' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST002' AND c.numero_licencia = 'LIC-TEST-002'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 03 - Centro' AND v.placa = 'TST003' AND c.numero_licencia = 'LIC-TEST-003'
+WHERE r.nombre_ruta = 'RT-TEST-03 Centro' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST003' AND c.numero_licencia = 'LIC-TEST-003'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 04 - Chapinero' AND v.placa = 'TST004' AND c.numero_licencia = 'LIC-TEST-004'
+WHERE r.nombre_ruta = 'RT-TEST-04 Chapinero' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST004' AND c.numero_licencia = 'LIC-TEST-004'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 05 - Kennedy' AND v.placa = 'TST005' AND c.numero_licencia = 'LIC-TEST-005'
+WHERE r.nombre_ruta = 'RT-TEST-05 Kennedy' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST005' AND c.numero_licencia = 'LIC-TEST-005'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 06 - Suba' AND v.placa = 'TST006' AND c.numero_licencia = 'LIC-TEST-006'
+WHERE r.nombre_ruta = 'RT-TEST-06 Suba' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST006' AND c.numero_licencia = 'LIC-TEST-006'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 07 - Fontibón' AND v.placa = 'TST007' AND c.numero_licencia = 'LIC-TEST-007'
+WHERE r.nombre_ruta = 'RT-TEST-07 Fontibón' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST007' AND c.numero_licencia = 'LIC-TEST-007'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 08 - Engativá' AND v.placa = 'TST008' AND c.numero_licencia = 'LIC-TEST-008'
+WHERE r.nombre_ruta = 'RT-TEST-08 Engativá' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST008' AND c.numero_licencia = 'LIC-TEST-008'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 INSERT INTO asignaciones_entrega (id_ruta, id_vehiculo, id_conductor, usuario_asignacion, notas)
 SELECT r.id_ruta, v.id_vehiculo, c.id_conductor, 'datos_prueba', 'Asignación de prueba'
 FROM rutas_entrega r, vehiculos v, conductores c
-WHERE r.nombre_ruta = 'Ruta Test 09 - Usaquén' AND v.placa = 'TST009' AND c.numero_licencia = 'LIC-TEST-009'
+WHERE r.nombre_ruta = 'RT-TEST-09 Usaquén' AND r.usuario_creacion = 'datos_prueba' AND v.placa = 'TST009' AND c.numero_licencia = 'LIC-TEST-009'
 AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta);
 
 -- 9. VENTAS EN RUTA. Rutas 1-5: ventas 1-10 ya entregadas. Rutas 6-7: ventas 11-15 En Transito (pendientes de entrega).
@@ -543,100 +568,108 @@ AND NOT EXISTS (SELECT 1 FROM asignaciones_entrega a WHERE a.id_ruta = r.id_ruta
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, '2026-09-01 11:15:00', 'Recepción venta 1', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-001' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 01 - Sur'
+WHERE r.nombre_ruta = 'RT-TEST-01 Sur' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, '2026-09-01 12:15:00', 'Recepción venta 2', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-002' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 01 - Sur'
+WHERE r.nombre_ruta = 'RT-TEST-01 Sur' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, '2026-09-02 11:15:00', 'Recepción venta 3', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-003' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 02 - Occidente'
+WHERE r.nombre_ruta = 'RT-TEST-02 Occidente' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, '2026-09-02 12:15:00', 'Recepción venta 4', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-004' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 02 - Occidente'
+WHERE r.nombre_ruta = 'RT-TEST-02 Occidente' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, '2026-09-03 11:15:00', 'Recepción venta 5', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-005' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 03 - Centro'
+WHERE r.nombre_ruta = 'RT-TEST-03 Centro' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, '2026-09-03 12:15:00', 'Recepción venta 6', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-006' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 03 - Centro'
+WHERE r.nombre_ruta = 'RT-TEST-03 Centro' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, '2026-09-04 11:15:00', 'Recepción venta 7', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-007' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 04 - Chapinero'
+WHERE r.nombre_ruta = 'RT-TEST-04 Chapinero' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, '2026-09-04 12:15:00', 'Recepción venta 8', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-008' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 04 - Chapinero'
+WHERE r.nombre_ruta = 'RT-TEST-04 Chapinero' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, '2026-09-05 11:15:00', 'Recepción venta 9', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-009' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 05 - Kennedy'
+WHERE r.nombre_ruta = 'RT-TEST-05 Kennedy' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, '2026-09-05 12:15:00', 'Recepción venta 10', 'Entregado sin novedad'
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-010' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 05 - Kennedy'
+WHERE r.nombre_ruta = 'RT-TEST-05 Kennedy' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-011' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 06 - Suba'
+WHERE r.nombre_ruta = 'RT-TEST-06 Suba' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-012' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 06 - Suba'
+WHERE r.nombre_ruta = 'RT-TEST-06 Suba' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 3, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-013' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 06 - Suba'
+WHERE r.nombre_ruta = 'RT-TEST-06 Suba' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-014' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 07 - Fontibón'
+WHERE r.nombre_ruta = 'RT-TEST-07 Fontibón' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-015' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 07 - Fontibón'
+WHERE r.nombre_ruta = 'RT-TEST-07 Fontibón' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-016' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 08 - Engativá'
+WHERE r.nombre_ruta = 'RT-TEST-08 Engativá' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-017' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 08 - Engativá'
+WHERE r.nombre_ruta = 'RT-TEST-08 Engativá' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 3, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-018' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 08 - Engativá'
+WHERE r.nombre_ruta = 'RT-TEST-08 Engativá' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 1, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-019' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 09 - Usaquén'
+WHERE r.nombre_ruta = 'RT-TEST-09 Usaquén' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
 INSERT INTO ventas_ruta (id_ruta, id_venta, orden_entrega, direccion_destino, fecha_entrega, recibido_por, observaciones)
 SELECT r.id_ruta, v.id_venta, 2, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-020' JOIN clientes c ON c.id_cliente = v.id_cliente
-WHERE r.nombre_ruta = 'Ruta Test 09 - Usaquén'
+WHERE r.nombre_ruta = 'RT-TEST-09 Usaquén' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
+
+-- 10. VERIFICACIÓN informativa (no modifica nada): proveedor 33 con el NIT ficticio de prueba.
+SELECT CASE
+         WHEN p.id_proveedor IS NULL THEN 'El proveedor 33 aun no existe: lo carga el modulo de Proveedores/Inventario.'
+         WHEN p.nit = '985731642-9' THEN 'El proveedor 33 coincide con el NIT ficticio de prueba 985731642-9.'
+         ELSE CONCAT('El proveedor 33 existe con otro NIT (', p.nit, '). No se modifico.')
+       END AS verificacion_proveedor_33
+FROM (SELECT 1) AS unico LEFT JOIN proveedores p ON p.id_proveedor = 33;
