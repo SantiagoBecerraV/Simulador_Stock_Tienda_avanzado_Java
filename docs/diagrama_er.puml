@@ -1,0 +1,294 @@
+@startuml
+' Diagrama entidad-relacion de erp_frescura_total. Sale de las sentencias CREATE TABLE de docs/database.sql.
+' Para regenerar el PNG: java -jar plantuml.jar -tpng docs/diagrama_er.puml
+!pragma layout smetana
+hide circle
+skinparam shadowing false
+skinparam defaultFontSize 11
+skinparam ranksep 60
+skinparam nodesep 40
+title Frescura Total ERP - Diagrama entidad-relacion (erp_frescura_total)
+
+' PK = clave primaria, FK = clave foranea, UK = valor unico
+entity estados_lote {
+  * id_estado : INT <<PK>>
+  --
+  * nombre : VARCHAR(50) <<UK>>
+  descripcion : TEXT
+}
+
+entity tipos_cliente {
+  * id_tipo : INT <<PK>>
+  --
+  * nombre : VARCHAR(50) <<UK>>
+  descripcion : TEXT
+}
+
+entity estados_venta {
+  * id_estado : INT <<PK>>
+  --
+  * nombre : VARCHAR(50) <<UK>>
+  descripcion : TEXT
+}
+
+entity informacion_empresa {
+  * id_empresa : INT <<PK>>
+  --
+  * nombre_empresa : VARCHAR(255)
+  * nit : VARCHAR(20) <<UK>>
+  * direccion : TEXT
+  ciudad : VARCHAR(100)
+  telefono : VARCHAR(20)
+  email : VARCHAR(100)
+}
+
+entity proveedores {
+  * id_proveedor : INT <<PK>>
+  --
+  * nombre : VARCHAR(255)
+  * nit : VARCHAR(20) <<UK>>
+  persona_contacto : VARCHAR(100)
+  * email : VARCHAR(100)
+  telefono : VARCHAR(20)
+  direccion : TEXT
+  activo : BOOLEAN
+  fecha_registro : DATETIME
+}
+
+entity categorias_producto {
+  * id_categoria : INT <<PK>>
+  --
+  * nombre : VARCHAR(100) <<UK>>
+  descripcion : TEXT
+}
+
+entity productos {
+  * id_producto : INT <<PK>>
+  --
+  * nombre : VARCHAR(255)
+  descripcion : TEXT
+  * id_categoria : INT <<FK>>
+  * unidad_medida : VARCHAR(20)
+  precio_base : DECIMAL(10,2)
+}
+
+entity productos_proveedor {
+  * id_proveedor : INT <<PK, FK>>
+  * id_producto : INT <<PK, FK>>
+}
+
+entity lotes_inventario {
+  * id_lote : INT <<PK>>
+  --
+  * numero_lote : VARCHAR(50) <<UK>>
+  * id_producto : INT <<FK>>
+  * id_proveedor : INT <<FK>>
+  * fecha_ingreso : DATETIME
+  * fecha_vencimiento : DATE
+  * cantidad_inicial : DECIMAL(10,2)
+  * cantidad : DECIMAL(10,2)
+  * precio_compra : DECIMAL(10,2)
+  * precio_venta : DECIMAL(10,2)
+  pasillo : VARCHAR(50)
+  estante : VARCHAR(50)
+  * id_estado : INT <<FK>>
+}
+
+entity registro_cuarentena {
+  * id_registro : INT <<PK>>
+  --
+  * id_lote : INT <<FK>>
+  * motivo : TEXT
+  * usuario : VARCHAR(100)
+  * fecha_registro : DATETIME
+  resuelta : BOOLEAN
+  fecha_resolucion : DATETIME
+  notas_resolucion : TEXT
+}
+
+entity inspecciones_calidad {
+  * id_inspeccion : INT <<PK>>
+  --
+  * id_lote : INT <<FK>>
+  * fecha_inspeccion : DATETIME
+  * resultado : ENUM(Aprobado, Rechazado)
+  * nombre_inspector : VARCHAR(100)
+  motivo_rechazo : TEXT
+  notas : TEXT
+}
+
+entity registro_mermas {
+  * id_registro : INT <<PK>>
+  --
+  * id_lote : INT <<FK>>
+  id_inspeccion : INT <<FK>>
+  * cantidad_perdida : DECIMAL(10,2)
+  * motivo : TEXT
+  * fecha_registro : DATETIME
+  usuario_registro : VARCHAR(100)
+}
+
+entity promociones {
+  * id_promocion : INT <<PK>>
+  --
+  * nombre : VARCHAR(255)
+  descripcion : TEXT
+  * tasa_descuento : DECIMAL(5,2)
+  aplica_estado_lote : INT <<FK>>
+  aplica_categoria_producto : INT <<FK>>
+  activa : BOOLEAN
+  fecha_inicio : DATE
+  fecha_fin : DATE
+}
+
+entity clientes {
+  * id_cliente : INT <<PK>>
+  --
+  * nombre : VARCHAR(255)
+  * documento : VARCHAR(20) <<UK>>
+  email : VARCHAR(100)
+  telefono : VARCHAR(20)
+  direccion : TEXT
+  * id_tipo : INT <<FK>>
+  fecha_registro : DATETIME
+}
+
+entity ventas {
+  * id_venta : INT <<PK>>
+  --
+  * numero_venta : VARCHAR(50) <<UK>>
+  * id_cliente : INT <<FK>>
+  * fecha_venta : DATETIME
+  * subtotal : DECIMAL(12,2)
+  * total_descuento : DECIMAL(12,2)
+  * total_impuesto : DECIMAL(12,2)
+  * monto_total : DECIMAL(12,2)
+  * id_estado : INT <<FK>>
+  usuario_registro : VARCHAR(100)
+}
+
+entity detalles_venta {
+  * id_detalle : INT <<PK>>
+  --
+  * id_venta : INT <<FK>>
+  * id_lote : INT <<FK>>
+  * cantidad_vendida : DECIMAL(10,2)
+  * precio_unitario : DECIMAL(10,2)
+  descuento_aplicado : DECIMAL(5,2)
+  monto_descuento : DECIMAL(10,2)
+  tasa_impuesto : DECIMAL(5,2)
+  monto_impuesto : DECIMAL(10,2)
+  * subtotal : DECIMAL(10,2)
+  * total_linea : DECIMAL(10,2)
+}
+
+entity facturas {
+  * id_factura : INT <<PK>>
+  --
+  * id_venta : INT <<FK>>
+  * numero_factura : VARCHAR(50) <<UK>>
+  * cufe : VARCHAR(255) <<UK>>
+  enlace_qr : VARCHAR(255)
+  * fecha_emision : DATETIME
+  * subtotal : DECIMAL(12,2)
+  * total_descuento : DECIMAL(12,2)
+  * monto_impuesto : DECIMAL(12,2)
+  * monto_total : DECIMAL(12,2)
+}
+
+entity conductores {
+  * id_conductor : INT <<PK>>
+  --
+  * nombre : VARCHAR(255)
+  * numero_licencia : VARCHAR(50) <<UK>>
+  telefono : VARCHAR(20)
+  email : VARCHAR(100)
+  activo : BOOLEAN
+}
+
+entity vehiculos {
+  * id_vehiculo : INT <<PK>>
+  --
+  * placa : VARCHAR(20) <<UK>>
+  modelo : VARCHAR(100)
+  capacidad : DECIMAL(10,2)
+  estado : ENUM(Activo, Inactivo, Mantenimiento)
+}
+
+entity rutas_entrega {
+  * id_ruta : INT <<PK>>
+  --
+  * nombre_ruta : VARCHAR(255)
+  fecha_creacion : DATETIME
+  usuario_creacion : VARCHAR(100)
+  hora_salida_estimada : DATETIME
+  hora_llegada_estimada : DATETIME
+  hora_salida_real : DATETIME
+  hora_llegada_real : DATETIME
+  estado : ENUM(Planificada, En Transito, Completada, Cancelada)
+}
+
+entity asignaciones_entrega {
+  * id_asignacion : INT <<PK>>
+  --
+  * id_ruta : INT <<FK>>
+  * id_vehiculo : INT <<FK>>
+  * id_conductor : INT <<FK>>
+  fecha_asignacion : DATETIME
+  usuario_asignacion : VARCHAR(100)
+  notas : TEXT
+}
+
+entity ventas_ruta {
+  * id : INT <<PK>>
+  --
+  * id_ruta : INT <<FK>>
+  * id_venta : INT <<FK>>
+  orden_entrega : INT
+  * direccion_destino : TEXT
+  fecha_entrega : DATETIME
+  recibido_por : VARCHAR(255)
+  observaciones : TEXT
+  (id_ruta, id_venta) <<UK>>
+}
+
+' ---- Inventario y proveedores ----
+categorias_producto ||--o{ productos : "clasifica"
+proveedores ||--o{ productos_proveedor : "ofrece"
+productos ||--o{ productos_proveedor : "es ofrecido"
+productos ||--o{ lotes_inventario : "se recibe en"
+proveedores ||--o{ lotes_inventario : "abastece"
+estados_lote ||--o{ lotes_inventario : "estado actual"
+lotes_inventario ||--o{ registro_cuarentena : "se pone en"
+lotes_inventario ||--o{ inspecciones_calidad : "se inspecciona"
+lotes_inventario ||--o{ registro_mermas : "genera"
+inspecciones_calidad |o--o{ registro_mermas : "origina (opcional)"
+
+' ---- Promociones (las dos referencias son opcionales) ----
+estados_lote |o--o{ promociones : "aplica_estado_lote"
+categorias_producto |o--o{ promociones : "aplica_categoria_producto"
+
+' ---- Clientes, ventas y facturas ----
+tipos_cliente ||--o{ clientes : "tipo"
+clientes ||--o{ ventas : "compra"
+estados_venta ||--o{ ventas : "estado"
+ventas ||--|{ detalles_venta : "contiene"
+lotes_inventario ||--o{ detalles_venta : "se vende en"
+ventas ||--o{ facturas : "se factura"
+
+' ---- Logistica ----
+rutas_entrega ||--o{ asignaciones_entrega : "tiene"
+vehiculos ||--o{ asignaciones_entrega : "se asigna"
+conductores ||--o{ asignaciones_entrega : "se asigna"
+rutas_entrega ||--o{ ventas_ruta : "incluye"
+ventas ||--o{ ventas_ruta : "se entrega en"
+
+note bottom of informacion_empresa
+  Sin llaves foraneas: guarda los datos
+  de la empresa (por ejemplo, para la factura).
+end note
+note bottom of facturas
+  El esquema permite varias filas por venta;
+  la aplicacion crea una sola factura por venta.
+end note
+@enduml
