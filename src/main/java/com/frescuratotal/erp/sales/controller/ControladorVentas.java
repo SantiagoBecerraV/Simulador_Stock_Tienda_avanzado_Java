@@ -10,8 +10,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Módulo de Ventas: valida el pedido y coordina el DAO. Los problemas del usuario se
- * reportan con IllegalArgumentException y un mensaje legible; lo demás es SQLException.
+ * Modulo de Ventas: valida el pedido y coordina el DAO. Los problemas del usuario se
+ * reportan con IllegalArgumentException y un mensaje legible; lo demas es SQLException.
  */
 public class ControladorVentas {
 

@@ -9,7 +9,7 @@ skinparam packageStyle rectangle
 skinparam defaultFontSize 11
 skinparam ranksep 40
 skinparam nodesep 25
-title Frescura Total ERP - Módulo de ventas
+title Frescura Total ERP - Modulo de ventas
 
 package "sales" {
 package "Clientes" {
@@ -79,7 +79,7 @@ package "Ventas" {
   }
 }
 
-package "Facturación" {
+package "Facturacion" {
   class MenuFacturacion <<view>> {
     +ejecutar()
   }
@@ -115,7 +115,7 @@ package "Facturación" {
   }
 }
 
-package "Logística" {
+package "Logistica" {
   class MenuLogistica <<view>> {
     +ejecutar()
   }
@@ -131,12 +131,12 @@ package "Logística" {
     +confirmarEntrega(idRuta, idVenta)
   }
   class LogisticaDao <<dao>> {
-    +listar y buscar vehículos, conductores, rutas
+    +listar y buscar vehiculos, conductores, rutas
     +insertar / actualizar / eliminar
     +guardarAsignacion()
-    +cancelarRuta(idRuta) [transacción]
-    +iniciarDespacho(idRuta) [transacción]
-    +confirmarEntrega(idRuta, idVenta) [transacción]
+    +cancelarRuta(idRuta) [transaccion]
+    +iniciarDespacho(idRuta) [transaccion]
+    +confirmarEntrega(idRuta, idVenta) [transaccion]
   }
   class VentaEnPreparacion <<record>>
   class Vehiculo <<record>>
@@ -209,6 +209,6 @@ LogisticaDao ..> EstadoRuta
 Vehiculo --> EstadoVehiculo
 Ruta --> EstadoRuta
 
-' ---- relación entre módulos por la base de datos (tablas compartidas) ----
-note "Ventas, Facturación y Logística no se llaman entre sí:\nse relacionan por las tablas ventas, detalles_venta, facturas y ventas_ruta.\nSales guarda la venta como 'Registrada'. Logística trabaja con ventas\n'En Preparacion' y las lleva a En Transito -> Entregada." as N1
+' ---- relacion entre modulos por la base de datos (tablas compartidas) ----
+note "Ventas, Facturacion y Logistica no se llaman entre si:\nse relacionan por las tablas ventas, detalles_venta, facturas y ventas_ruta.\nSales guarda la venta como 'Registrada'. Logistica trabaja con ventas\n'En Preparacion' y las lleva a En Transito -> Entregada." as N1
 @enduml

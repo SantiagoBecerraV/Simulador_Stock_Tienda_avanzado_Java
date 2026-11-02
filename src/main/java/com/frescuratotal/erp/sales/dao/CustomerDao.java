@@ -18,7 +18,7 @@ public class CustomerDao {
             + "c.id_tipo, t.nombre AS tipo, c.fecha_registro "
             + "FROM clientes c JOIN tipos_cliente t ON t.id_tipo = c.id_tipo ";
 
-    // La conexión viene del paquete común compartido; este DAO no abre la suya.
+    // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection connection;
 
     public CustomerDao(Connection connection) {
@@ -59,7 +59,7 @@ public class CustomerDao {
         }
     }
 
-    // fecha_registro no se incluye en el UPDATE a propósito.
+    // fecha_registro no se incluye en el UPDATE a proposito.
     public boolean update(Customer c) throws SQLException {
         String sql = "UPDATE clientes SET nombre = ?, documento = ?, email = ?, telefono = ?, "
                 + "direccion = ?, id_tipo = ? WHERE id_cliente = ?";
@@ -91,7 +91,7 @@ public class CustomerDao {
         }
     }
 
-    // id_tipo -> nombre, leído del catálogo para no escribir ids fijos en el código.
+    // id_tipo -> nombre, leido del catalogo para no escribir ids fijos en el codigo.
     public Map<Integer, String> findTypes() throws SQLException {
         Map<Integer, String> types = new LinkedHashMap<>();
         try (PreparedStatement ps = connection.prepareStatement("SELECT id_tipo, nombre FROM tipos_cliente ORDER BY id_tipo");

@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
-// Factura con todo lo que necesita el PDF. El cufe y enlaceQr son datos simulados de demostración.
+// Factura con todo lo que necesita el PDF. El cufe y enlaceQr son datos simulados de demostracion.
 public record Factura(
         int idFactura,
         String numeroFactura,

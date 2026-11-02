@@ -16,8 +16,8 @@ import java.util.List;
 public class VentasDao {
 
     // FIFO: los lotes que vencen primero salen primero. Solo se ofrecen lotes con existencias,
-    // estado vendible y sin vencer. El descuento sale de la promoción activa y vigente
-    // que aplica al estado "Proximo a Vencer"; si no hay promoción, es 0.
+    // estado vendible y sin vencer. El descuento sale de la promocion activa y vigente
+    // que aplica al estado "Proximo a Vencer"; si no hay promocion, es 0.
     private static final String LOTES_VENDIBLES =
             "SELECT l.id_lote, l.numero_lote, p.nombre AS producto, l.fecha_vencimiento, l.cantidad, "
             + "l.precio_venta, e.nombre AS estado, "
@@ -34,7 +34,7 @@ public class VentasDao {
             + "AND l.cantidad > 0 AND l.fecha_vencimiento >= CURDATE() "
             + "ORDER BY l.fecha_vencimiento ASC, l.id_lote ASC";
 
-    // La conexión viene del paquete común compartido; este DAO no abre la suya.
+    // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection conexion;
 
     public VentasDao(Connection conexion) {
@@ -60,7 +60,7 @@ public class VentasDao {
         return lotes;
     }
 
-    // Venta + detalles + descuento de stock en UNA transacción: si algo falla, rollback de todo.
+    // Venta + detalles + descuento de stock en UNA transaccion: si algo falla, rollback de todo.
     // Devuelve el id de la venta creada.
     public int registrarVenta(int idCliente, List<LineaPedido> lineas) throws SQLException {
         boolean autoCommitOriginal = conexion.getAutoCommit();
@@ -111,8 +111,8 @@ public class VentasDao {
         }
     }
 
-    // Verificación y descuento en un solo UPDATE: la fila queda bloqueada hasta el commit y
-    // solo se actualiza si todavía hay existencias y el lote sigue siendo vendible.
+    // Verificacion y descuento en un solo UPDATE: la fila queda bloqueada hasta el commit y
+    // solo se actualiza si todavia hay existencias y el lote sigue siendo vendible.
     private void descontarStock(LineaPedido linea) throws SQLException {
         String sql = "UPDATE lotes_inventario SET cantidad = cantidad - ? "
                 + "WHERE id_lote = ? AND cantidad >= ? AND fecha_vencimiento >= CURDATE() "
@@ -123,7 +123,7 @@ public class VentasDao {
             ps.setBigDecimal(3, linea.cantidad());
             if (ps.executeUpdate() == 0) {
                 throw new IllegalArgumentException("Ya no hay existencias suficientes del lote "
-                        + linea.lote().numeroLote() + ". La venta no se registró.");
+                        + linea.lote().numeroLote() + ". La venta no se registro.");
             }
         }
     }

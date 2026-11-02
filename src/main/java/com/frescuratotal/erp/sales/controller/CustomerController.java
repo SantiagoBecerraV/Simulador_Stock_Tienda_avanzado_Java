@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Valida los datos y coordina el DAO. Los problemas del usuario se reportan
- * como IllegalArgumentException con un mensaje legible; lo demás es SQLException.
+ * como IllegalArgumentException con un mensaje legible; lo demas es SQLException.
  */
 public class CustomerController {
 
@@ -74,7 +74,7 @@ public class CustomerController {
         }
     }
 
-    // Quita espacios y guarda como NULL los campos opcionales vacíos.
+    // Quita espacios y guarda como NULL los campos opcionales vacios.
     private Customer clean(Customer c) {
         return new Customer(c.customerId(), c.name().trim(), c.document().trim(),
                 blankToNull(c.email()), blankToNull(c.phone()), blankToNull(c.address()),

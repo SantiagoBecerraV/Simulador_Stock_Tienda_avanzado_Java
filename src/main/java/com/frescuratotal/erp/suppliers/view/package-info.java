@@ -1,2 +1,2 @@
-/** Proveedores: menús de consola. */
+/** Proveedores: menus de consola. */
 package com.frescuratotal.erp.suppliers.view;

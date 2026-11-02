@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class FacturaDao {
 
-    // La conexión viene del paquete común compartido; este DAO no abre la suya.
+    // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection conexion;
     private final CustomerDao clientes;
 
@@ -23,7 +23,7 @@ public class FacturaDao {
         this.clientes = new CustomerDao(conexion);
     }
 
-    // Se factura toda venta que exista y no esté cancelada.
+    // Se factura toda venta que exista y no este cancelada.
     public boolean ventaFacturable(int idVenta) throws SQLException {
         String sql = "SELECT 1 FROM ventas v JOIN estados_venta e ON e.id_estado = v.id_estado "
                 + "WHERE v.id_venta = ? AND e.nombre <> 'Cancelada'";
@@ -35,7 +35,7 @@ public class FacturaDao {
         }
     }
 
-    // Los totales se copian de la venta, así la factura siempre coincide con ella.
+    // Los totales se copian de la venta, asi la factura siempre coincide con ella.
     public void insertar(int idVenta, String numeroFactura, String cufe, String enlaceQr) throws SQLException {
         String sql = "INSERT INTO facturas (id_venta, numero_factura, cufe, enlace_qr, subtotal, "
                 + "total_descuento, monto_impuesto, monto_total) "

@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 /**
- * Menú de consola del módulo de Facturación. Punto de entrada para el menú principal:
+ * Menu de consola del modulo de Facturacion. Punto de entrada para el menu principal:
  * new MenuFacturacion(scanner, DatabaseConnection.getConnection()).ejecutar();
  */
 public class MenuFacturacion {
@@ -27,9 +27,9 @@ public class MenuFacturacion {
 
     public void ejecutar() {
         while (true) {
-            System.out.println("\n--- Facturación ---");
+            System.out.println("\n--- Facturacion ---");
             System.out.println("1. Generar factura PDF de una venta  0. Volver");
-            String opcion = preguntar("Opción");
+            String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;
             }
@@ -37,9 +37,9 @@ public class MenuFacturacion {
                 if (opcion.equals("1")) {
                     int idVenta = convertirEntero(preguntar("Id de la venta"));
                     Path pdf = controlador.generarFactura(idVenta, CARPETA_FACTURAS);
-                    System.out.println("Factura de demostración generada: " + pdf.toAbsolutePath());
+                    System.out.println("Factura de demostracion generada: " + pdf.toAbsolutePath());
                 } else {
-                    System.out.println("Opción no válida.");
+                    System.out.println("Opcion no valida.");
                 }
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
@@ -55,7 +55,7 @@ public class MenuFacturacion {
         try {
             return Integer.parseInt(texto.trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("'" + texto + "' no es un número válido.");
+            throw new IllegalArgumentException("'" + texto + "' no es un numero valido.");
         }
     }
 

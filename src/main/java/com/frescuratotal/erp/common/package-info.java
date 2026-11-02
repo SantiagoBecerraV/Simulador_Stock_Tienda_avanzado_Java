@@ -1,2 +1,2 @@
-/** Clases compartidas por todos los módulos, como la conexión a la base de datos. */
+/** Clases compartidas por todos los modulos, como la conexion a la base de datos. */
 package com.frescuratotal.erp.common;

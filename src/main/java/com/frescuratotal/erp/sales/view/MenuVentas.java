@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Menú de consola del módulo de Ventas. Punto de entrada para el menú principal:
+ * Menu de consola del modulo de Ventas. Punto de entrada para el menu principal:
  * new MenuVentas(scanner, DatabaseConnection.getConnection()).ejecutar();
  */
 public class MenuVentas {
@@ -31,7 +31,7 @@ public class MenuVentas {
         while (true) {
             System.out.println("\n--- Ventas ---");
             System.out.println("1. Nueva venta  2. Ver lotes disponibles  0. Volver");
-            String opcion = preguntar("Opción");
+            String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;
             }
@@ -39,7 +39,7 @@ public class MenuVentas {
                 switch (opcion) {
                     case "1" -> nuevaVenta();
                     case "2" -> mostrarLotes(controlador.listarLotes());
-                    default -> System.out.println("Opción no válida.");
+                    default -> System.out.println("Opcion no valida.");
                 }
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
@@ -55,18 +55,18 @@ public class MenuVentas {
 
         List<LineaPedido> pedido = new ArrayList<>();
         while (true) {
-            // Se vuelve a consultar en cada vuelta para mostrar las existencias más recientes.
+            // Se vuelve a consultar en cada vuelta para mostrar las existencias mas recientes.
             List<Lote> lotes = controlador.listarLotes();
             mostrarLotes(lotes);
             String texto = preguntar("Id del lote a agregar (Enter para terminar)");
             if (texto.isEmpty()) {
                 break;
             }
-            // Un dato inválido no debe perder el pedido ya armado.
+            // Un dato invalido no debe perder el pedido ya armado.
             try {
                 int idLote = convertirEntero(texto);
                 Lote lote = lotes.stream().filter(l -> l.idLote() == idLote).findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("Ese lote no está disponible para la venta."));
+                        .orElseThrow(() -> new IllegalArgumentException("Ese lote no esta disponible para la venta."));
                 BigDecimal cantidad = convertirDecimal(preguntar("Cantidad"));
                 controlador.agregarLinea(pedido, lote, cantidad);
             } catch (IllegalArgumentException e) {
@@ -75,13 +75,13 @@ public class MenuVentas {
         }
 
         if (pedido.isEmpty()) {
-            System.out.println("Venta cancelada: el pedido está vacío.");
+            System.out.println("Venta cancelada: el pedido esta vacio.");
             return;
         }
         mostrarResumen(pedido);
-        if (preguntar("¿Confirmar la venta? (s/n)").equalsIgnoreCase("s")) {
+        if (preguntar("Confirmar la venta? (s/n)").equalsIgnoreCase("s")) {
             int idVenta = controlador.confirmarVenta(cliente.customerId(), pedido);
-            System.out.println("Venta registrada con id " + idVenta + ". Use Facturación para generar la factura.");
+            System.out.println("Venta registrada con id " + idVenta + ". Use Facturacion para generar la factura.");
         } else {
             System.out.println("Venta cancelada.");
         }
@@ -119,7 +119,7 @@ public class MenuVentas {
         try {
             return Integer.parseInt(texto.trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("'" + texto + "' no es un número válido.");
+            throw new IllegalArgumentException("'" + texto + "' no es un numero valido.");
         }
     }
 
@@ -127,7 +127,7 @@ public class MenuVentas {
         try {
             return new BigDecimal(texto.trim().replace(',', '.'));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("'" + texto + "' no es una cantidad válida.");
+            throw new IllegalArgumentException("'" + texto + "' no es una cantidad valida.");
         }
     }
 

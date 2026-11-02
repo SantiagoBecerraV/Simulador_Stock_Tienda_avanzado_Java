@@ -30,8 +30,8 @@ import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
 /**
- * Dibuja la factura en PDF con los datos que ya están en la base de datos.
- * Es un documento de DEMOSTRACIÓN: el CUFE y el QR son simulados y no tiene validez fiscal.
+ * Dibuja la factura en PDF con los datos que ya estan en la base de datos.
+ * Es un documento de DEMOSTRACION: el CUFE y el QR son simulados y no tiene validez fiscal.
  */
 public class FacturaPdf {
 
@@ -49,9 +49,9 @@ public class FacturaPdf {
             PdfWriter.getInstance(documento, salida);
             documento.open();
 
-            documento.add(new Paragraph("FACTURA DE DEMOSTRACIÓN - DOCUMENTO SIMULADO, SIN VALIDEZ FISCAL", AVISO));
+            documento.add(new Paragraph("FACTURA DE DEMOSTRACION - DOCUMENTO SIMULADO, SIN VALIDEZ FISCAL", AVISO));
             documento.add(new Paragraph(f.empresa().nombre(), TITULO));
-            documento.add(new Paragraph("NIT: " + f.empresa().nit() + " (NIT de demostración)", NORMAL));
+            documento.add(new Paragraph("NIT: " + f.empresa().nit() + " (NIT de demostracion)", NORMAL));
             documento.add(new Paragraph(f.empresa().direccion() + ", " + f.empresa().ciudad()
                     + " | Tel: " + f.empresa().telefono() + " | " + f.empresa().email(), NORMAL));
 
@@ -71,8 +71,8 @@ public class FacturaPdf {
 
             documento.add(new Paragraph("\nCUFE (simulado): " + f.cufe(), NORMAL));
             documento.add(qr(f.enlaceQr()));
-            documento.add(new Paragraph("QR simulado de demostración. No corresponde a un documento "
-                    + "electrónico validado por la DIAN.", AVISO));
+            documento.add(new Paragraph("QR simulado de demostracion. No corresponde a un documento "
+                    + "electronico validado por la DIAN.", AVISO));
             documento.close();
         } catch (DocumentException | WriterException e) {
             throw new IOException("No se pudo generar el PDF: " + e.getMessage(), e);
@@ -132,7 +132,7 @@ public class FacturaPdf {
         return valor == null ? "-" : valor;
     }
 
-    // ZXing calcula la matriz del QR; aquí se pinta pixel a pixel como imagen PNG.
+    // ZXing calcula la matriz del QR; aqui se pinta pixel a pixel como imagen PNG.
     private static Image qr(String datos) throws WriterException, IOException, DocumentException {
         BitMatrix matriz = new QRCodeWriter().encode(datos, BarcodeFormat.QR_CODE, 150, 150);
         BufferedImage imagen = new BufferedImage(matriz.getWidth(), matriz.getHeight(), BufferedImage.TYPE_INT_RGB);

@@ -28,7 +28,7 @@ public class LogisticaDao {
             + "LEFT JOIN vehiculos ve ON ve.id_vehiculo = a.id_vehiculo "
             + "LEFT JOIN conductores co ON co.id_conductor = a.id_conductor ";
 
-    // La conexión viene del paquete común compartido; este DAO no abre la suya.
+    // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection conexion;
 
     public LogisticaDao(Connection conexion) {
@@ -37,7 +37,7 @@ public class LogisticaDao {
 
     // ---------- Ventas ----------
 
-    // La columna idRuta sirve para ver qué ventas ya están asignadas a una ruta.
+    // La columna idRuta sirve para ver que ventas ya estan asignadas a una ruta.
     public List<VentaEnPreparacion> listarVentasEnPreparacion() throws SQLException {
         String sql = "SELECT v.id_venta, v.numero_venta, c.nombre, c.direccion, v.monto_total, vr.id_ruta "
                 + "FROM ventas v "
@@ -59,7 +59,7 @@ public class LogisticaDao {
         return ventas;
     }
 
-    // ---------- Vehículos ----------
+    // ---------- Vehiculos ----------
 
     public List<Vehiculo> listarVehiculos() throws SQLException {
         List<Vehiculo> vehiculos = new ArrayList<>();
@@ -254,8 +254,8 @@ public class LogisticaDao {
         return existe("SELECT 1 FROM asignaciones_entrega WHERE id_ruta = ?", idRuta);
     }
 
-    // Un vehículo (o conductor) está ocupado si está en otra ruta que aún no termina.
-    // idRutaExcluida es la ruta que se está editando (use 0 para no excluir ninguna).
+    // Un vehiculo (o conductor) esta ocupado si esta en otra ruta que aun no termina.
+    // idRutaExcluida es la ruta que se esta editando (use 0 para no excluir ninguna).
     public boolean vehiculoOcupado(int idVehiculo, int idRutaExcluida) throws SQLException {
         return existe("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
                 + "WHERE a.id_vehiculo = ? AND a.id_ruta <> ? AND r.estado IN ('Planificada', 'En Transito')",
@@ -268,7 +268,7 @@ public class LogisticaDao {
                 idConductor, idRutaExcluida);
     }
 
-    // Si la ruta ya tenía vehículo y conductor, se cambian; si no, se crea la asignación.
+    // Si la ruta ya tenia vehiculo y conductor, se cambian; si no, se crea la asignacion.
     public void guardarAsignacion(int idRuta, int idVehiculo, int idConductor) throws SQLException {
         String sql = rutaTieneAsignacion(idRuta)
                 ? "UPDATE asignaciones_entrega SET id_vehiculo = ?, id_conductor = ? WHERE id_ruta = ?"
@@ -332,7 +332,7 @@ public class LogisticaDao {
         }
     }
 
-    // Solo se quitan ventas que aún no fueron entregadas.
+    // Solo se quitan ventas que aun no fueron entregadas.
     public boolean quitarVentaDeRuta(int idRuta, int idVenta) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement(
                 "DELETE FROM ventas_ruta WHERE id_ruta = ? AND id_venta = ? AND fecha_entrega IS NULL")) {
@@ -362,10 +362,10 @@ public class LogisticaDao {
         return entregas;
     }
 
-    // ---------- Operaciones con transacción ----------
+    // ---------- Operaciones con transaccion ----------
 
     // Despacho: la ruta pasa a "En Transito" y todas sus ventas de "En Preparacion" a "En Transito".
-    // Si alguna venta ya no está en preparación, se revierte todo.
+    // Si alguna venta ya no esta en preparacion, se revierte todo.
     public void iniciarDespacho(int idRuta) throws SQLException {
         ejecutarEnTransaccion(() -> {
             cambiarEstadoRuta("UPDATE rutas_entrega SET estado = ?, hora_salida_real = NOW() "
@@ -383,13 +383,13 @@ public class LogisticaDao {
             }
             if (actualizadas != contarVentasRuta(idRuta)) {
                 throw new IllegalArgumentException(
-                        "Alguna venta de la ruta ya no está en preparación. El despacho no se realizó.");
+                        "Alguna venta de la ruta ya no esta en preparacion. El despacho no se realizo.");
             }
         });
     }
 
     // Entrega: guarda fecha, receptor y observaciones, pasa la venta a "Entregada" y,
-    // si era la última pendiente, cierra la ruta como "Completada". Devuelve true si la ruta se completó.
+    // si era la ultima pendiente, cierra la ruta como "Completada". Devuelve true si la ruta se completo.
     public boolean confirmarEntrega(int idRuta, int idVenta, String recibidoPor, String observaciones) throws SQLException {
         boolean[] rutaCompletada = {false};
         ejecutarEnTransaccion(() -> {
@@ -404,7 +404,7 @@ public class LogisticaDao {
                 ps.setInt(5, idRuta);
                 ps.setString(6, EstadoRuta.EN_TRANSITO.valorBd());
                 if (ps.executeUpdate() == 0) {
-                    throw new IllegalArgumentException("No se puede confirmar: la ruta no está en tránsito, "
+                    throw new IllegalArgumentException("No se puede confirmar: la ruta no esta en transito, "
                             + "la venta no pertenece a la ruta o ya fue entregada.");
                 }
             }
@@ -416,7 +416,7 @@ public class LogisticaDao {
                 ps.setInt(2, idVenta);
                 ps.setString(3, EstadoVenta.IN_TRANSIT.valorBd());
                 if (ps.executeUpdate() == 0) {
-                    throw new IllegalArgumentException("La venta no está en tránsito; no se puede marcar como entregada.");
+                    throw new IllegalArgumentException("La venta no esta en transito; no se puede marcar como entregada.");
                 }
             }
 
@@ -432,12 +432,12 @@ public class LogisticaDao {
 
     // ---------- Auxiliares ----------
 
-    // Operación de base de datos que puede lanzar SQLException.
+    // Operacion de base de datos que puede lanzar SQLException.
     private interface Operacion {
         void ejecutar() throws SQLException;
     }
 
-    // Todo o nada: commit si la operación termina bien, rollback si falla.
+    // Todo o nada: commit si la operacion termina bien, rollback si falla.
     private void ejecutarEnTransaccion(Operacion operacion) throws SQLException {
         boolean autoCommitOriginal = conexion.getAutoCommit();
         conexion.setAutoCommit(false);
@@ -452,14 +452,14 @@ public class LogisticaDao {
         }
     }
 
-    // Cambia el estado de una ruta solo si está en el estado esperado (así detecta cambios simultáneos).
+    // Cambia el estado de una ruta solo si esta en el estado esperado (asi detecta cambios simultaneos).
     private void cambiarEstadoRuta(String sql, EstadoRuta nuevo, int idRuta, EstadoRuta esperado) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setString(1, nuevo.valorBd());
             ps.setInt(2, idRuta);
             ps.setString(3, esperado.valorBd());
             if (ps.executeUpdate() == 0) {
-                throw new IllegalArgumentException("La ruta ya no está en estado " + esperado.valorBd() + ".");
+                throw new IllegalArgumentException("La ruta ya no esta en estado " + esperado.valorBd() + ".");
             }
         }
     }
@@ -474,7 +474,7 @@ public class LogisticaDao {
         }
     }
 
-    // Consulta con parámetros enteros: true si devuelve al menos una fila.
+    // Consulta con parametros enteros: true si devuelve al menos una fila.
     private boolean existe(String sql, int... parametros) throws SQLException {
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             for (int i = 0; i < parametros.length; i++) {

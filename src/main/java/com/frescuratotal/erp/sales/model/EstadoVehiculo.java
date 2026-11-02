@@ -22,6 +22,6 @@ public enum EstadoVehiculo {
                 return estado;
             }
         }
-        throw new IllegalArgumentException("Estado de vehículo desconocido: " + valor);
+        throw new IllegalArgumentException("Estado de vehiculo desconocido: " + valor);
     }
 }

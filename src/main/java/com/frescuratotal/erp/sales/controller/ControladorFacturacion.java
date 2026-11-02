@@ -10,9 +10,9 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 /**
- * Módulo de Facturación: a partir de una venta ya registrada crea (una sola vez) su factura
+ * Modulo de Facturacion: a partir de una venta ya registrada crea (una sola vez) su factura
  * en la tabla facturas y genera el PDF. Si la venta ya tiene factura, solo se regenera el PDF.
- * El CUFE y el QR son simulados: la factura NO es un documento fiscal válido.
+ * El CUFE y el QR son simulados: la factura NO es un documento fiscal valido.
  */
 public class ControladorFacturacion {
 

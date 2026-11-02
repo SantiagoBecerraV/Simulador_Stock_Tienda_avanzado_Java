@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 /**
- * Menú de consola del módulo de clientes. Punto de entrada para el menú principal:
+ * Menu de consola del modulo de clientes. Punto de entrada para el menu principal:
  * new CustomerMenu(scanner, DatabaseConnection.getConnection()).run();
  */
 public class CustomerMenu {

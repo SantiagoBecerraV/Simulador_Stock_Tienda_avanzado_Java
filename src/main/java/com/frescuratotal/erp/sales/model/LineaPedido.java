@@ -3,7 +3,7 @@ package com.frescuratotal.erp.sales.model;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-// Línea del pedido. Cálculo: subtotal - descuento + impuesto = total de la línea.
+// Linea del pedido. Calculo: subtotal - descuento + impuesto = total de la linea.
 public record LineaPedido(Lote lote, BigDecimal cantidad, BigDecimal tasaImpuesto) {
 
     public BigDecimal subtotal() {

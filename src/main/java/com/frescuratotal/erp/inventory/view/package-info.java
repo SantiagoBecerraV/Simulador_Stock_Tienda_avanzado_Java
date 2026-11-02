@@ -1,2 +1,2 @@
-/** Inventario: menús de consola. */
+/** Inventario: menus de consola. */
 package com.frescuratotal.erp.inventory.view;
