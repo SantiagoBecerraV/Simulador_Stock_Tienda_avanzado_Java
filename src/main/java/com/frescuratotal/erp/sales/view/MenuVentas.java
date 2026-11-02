@@ -2,11 +2,15 @@ package com.frescuratotal.erp.sales.view;
 
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
+import com.frescuratotal.erp.sales.controller.ControladorFacturacion;
 import com.frescuratotal.erp.sales.controller.ControladorVentas;
+import com.frescuratotal.erp.sales.dao.FacturaDao;
 import com.frescuratotal.erp.sales.dao.VentasDao;
 import com.frescuratotal.erp.sales.model.LineaPedido;
 import com.frescuratotal.erp.sales.model.Lote;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,10 +25,12 @@ public class MenuVentas {
 
     private final Scanner entrada;
     private final ControladorVentas controlador;
+    private final ControladorFacturacion facturacion;
 
     public MenuVentas(Scanner entrada, Connection conexion) {
         this.entrada = entrada;
         this.controlador = new ControladorVentas(new VentasDao(conexion), new CustomerDao(conexion));
+        this.facturacion = new ControladorFacturacion(new FacturaDao(conexion));
     }
 
     public void ejecutar() {
@@ -81,9 +87,23 @@ public class MenuVentas {
         mostrarResumen(pedido);
         if (preguntar("Confirmar la venta? (s/n)").equalsIgnoreCase("s")) {
             int idVenta = controlador.confirmarVenta(cliente.customerId(), pedido);
-            System.out.println("Venta registrada con id " + idVenta + ". Use Facturacion para generar la factura.");
+            System.out.println("Venta registrada con id " + idVenta + ".");
+            generarFactura(idVenta);
         } else {
             System.out.println("Venta cancelada.");
+        }
+    }
+
+    // La factura se crea despues de guardar la venta: si falla, la venta no se pierde y se puede
+    // reintentar desde Facturacion (no se duplica, una venta tiene una sola factura).
+    private void generarFactura(int idVenta) {
+        try {
+            Path pdf = facturacion.generarFactura(idVenta, MenuFacturacion.CARPETA_FACTURAS);
+            System.out.println("Factura de demostracion generada: " + pdf.toAbsolutePath());
+        } catch (SQLException | IOException | IllegalArgumentException e) {
+            System.out.println("La venta " + idVenta + " quedo registrada, pero no se pudo generar la factura: "
+                    + e.getMessage());
+            System.out.println("Puede generarla despues desde el menu Facturacion.");
         }
     }
 

@@ -15,7 +15,7 @@ import java.util.Scanner;
 public class MenuFacturacion {
 
     // Carpeta (relativa a donde se ejecuta el programa) donde se guardan los PDF.
-    private static final Path CARPETA_FACTURAS = Path.of("facturas");
+    static final Path CARPETA_FACTURAS = Path.of("facturas");
 
     private final Scanner entrada;
     private final ControladorFacturacion controlador;
