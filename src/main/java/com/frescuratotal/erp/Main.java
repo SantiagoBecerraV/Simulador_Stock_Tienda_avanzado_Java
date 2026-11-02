@@ -65,7 +65,7 @@ public class Main {
                 case 4 -> new MenuVentas(scanner, conexion).ejecutar();
                 case 5 -> new MenuFacturacion(scanner, conexion).ejecutar();
                 case 6 -> new CustomerMenu(scanner, conexion).run();
-                default -> new MenuLogistica(scanner, conexion).ejecutar();
+                case 7 -> new MenuLogistica(scanner, conexion).ejecutar();
             }
         } catch (SQLException e) {
             System.out.println("No se pudo conectar a la base de datos: " + e.getMessage());

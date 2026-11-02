@@ -17,9 +17,11 @@ import java.util.List;
 
 public class VentasDao {
 
-    // FIFO: los lotes que vencen primero salen primero. Solo se ofrecen lotes con existencias,
-    // estado vendible y sin vencer. El descuento sale de la promocion activa y vigente
-    // que aplica al estado "Proximo a Vencer"; si no hay promocion, es 0.
+    // FEFO: los lotes que vencen primero salen primero. Solo se ofrecen lotes con existencias,
+    // estado vendible y sin vencer. El descuento es el mayor de las promociones activas y vigentes
+    // del estado del lote; si no hay promocion, es 0. La condicion e.nombre = 'Proximo a Vencer'
+    // no sobra: limita los descuentos a lotes proximos a vencer aunque exista una promocion
+    // configurada para otro estado.
     private static final String LOTES_VENDIBLES =
             "SELECT l.id_lote, l.numero_lote, p.nombre AS producto, l.fecha_vencimiento, l.cantidad, "
             + "l.precio_venta, e.nombre AS estado, "

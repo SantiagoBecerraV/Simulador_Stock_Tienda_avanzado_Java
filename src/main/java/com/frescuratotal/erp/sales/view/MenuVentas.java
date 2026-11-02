@@ -37,7 +37,10 @@ public class MenuVentas {
     public void ejecutar() {
         while (true) {
             System.out.println("\n--- Ventas ---");
-            System.out.println("1. Nueva venta  2. Ver lotes disponibles  3. Pasar venta a preparacion  0. Volver");
+            System.out.println("1. Nueva venta");
+            System.out.println("2. Ver lotes disponibles");
+            System.out.println("3. Pasar venta a preparacion");
+            System.out.println("0. Volver");
             String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;

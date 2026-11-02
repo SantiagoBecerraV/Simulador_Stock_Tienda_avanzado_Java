@@ -48,7 +48,7 @@ public class ControladorVentas {
                 .orElseThrow(() -> new IllegalArgumentException("No existe un cliente con id " + idCliente + "."));
     }
 
-    // Ya vienen ordenados por vencimiento (FIFO).
+    // Ya vienen ordenados por vencimiento (FEFO).
     public List<Lote> listarLotes() throws SQLException {
         return dao.listarLotesVendibles();
     }

@@ -28,7 +28,8 @@ public class MenuFacturacion {
     public void ejecutar() {
         while (true) {
             System.out.println("\n--- Facturacion ---");
-            System.out.println("1. Generar factura PDF de una venta  0. Volver");
+            System.out.println("1. Generar factura PDF de una venta");
+            System.out.println("0. Volver");
             String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;

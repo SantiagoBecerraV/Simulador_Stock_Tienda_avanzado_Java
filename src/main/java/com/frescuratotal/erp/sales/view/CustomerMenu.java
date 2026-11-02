@@ -25,7 +25,12 @@ public class CustomerMenu {
     public void run() {
         while (true) {
             System.out.println("\n--- Clientes ---");
-            System.out.println("1. Listar  2. Buscar por id  3. Crear  4. Actualizar  5. Eliminar  0. Volver");
+            System.out.println("1. Listar");
+            System.out.println("2. Buscar por id");
+            System.out.println("3. Crear");
+            System.out.println("4. Actualizar");
+            System.out.println("5. Eliminar");
+            System.out.println("0. Volver");
             String option = ask("Opcion");
             if (option.equals("0")) {
                 return;

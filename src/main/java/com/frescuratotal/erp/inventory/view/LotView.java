@@ -180,9 +180,10 @@ public class LotView {
 
     private BigDecimal askDecimal(String prompt) {
         try {
-            return new BigDecimal(ask(prompt));
+            // Igual que en Ventas: se acepta coma o punto decimal (12,5 o 12.5).
+            return new BigDecimal(ask(prompt).replace(',', '.'));
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Ingrese un numero, por ejemplo 12 o 12.5");
+            throw new IllegalArgumentException("Ingrese un numero, por ejemplo 12, 12.5 o 12,5");
         }
     }
 
