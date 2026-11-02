@@ -1,15 +1,17 @@
--- Datos de prueba: clientes, ventas, detalles de venta, vehiculos, conductores, rutas y asignaciones.
--- Datos ficticios. NO crea ni borra la base: ejecutar sobre erp_frescura_total ya creada con el script del proyecto.
+-- SCRIPT OPCIONAL, NO ES EL SCRIPT MAESTRO.
+-- El script maestro es docs/database.sql: crea la base y carga todos los datos de prueba (incluidos clientes,
+-- ventas, vehiculos, conductores y rutas). Si ya cargo ese archivo, NO ejecute este: aqui se detiene con un error.
+-- Este script solo sirve para una base con la estructura y los lotes de Inventario pero SIN ventas propias,
+-- cuando se quiere agregar solo datos de ventas y logistica (clientes, ventas V-TEST-nnn, vehiculos, conductores
+-- y rutas RT-TEST-nn). Datos ficticios. NO crea ni borra la base: ejecutar sobre erp_frescura_total ya creada.
 --
 -- ORDEN DE CARGA (dependencias entre modulos):
---   1. Script del proyecto (esquema y catalogos).
---   2. SQL de productos y lotes del modulo de Inventario (de su companero). Este script NO crea productos,
---      proveedores ni lotes: los detalles de venta usan los lotes que ya existan en lotes_inventario.
---   3. Este script. Si no hay lotes, se detiene al inicio con un error y no inserta nada.
+--   1. Estructura y catalogos de la base (por ejemplo, la seccion DDL de docs/database.sql).
+--   2. Productos y lotes de Inventario. Este script NO crea productos, proveedores ni lotes: los detalles de
+--      venta usan los lotes que ya existan en lotes_inventario.
+--   3. Este script. Se detiene al inicio, sin insertar nada, si no hay lotes o si ya hay ventas ajenas a el.
 --
--- Proveedor ID 33: para estos datos de prueba se espera que el proveedor 33 tenga el NIT ficticio 985731642-9
--- (dato inventado solo para pruebas; no es un NIT registrado ni asignado por la DIAN). Este script no crea ni
--- modifica proveedores: lo carga el modulo de Proveedores/Inventario. Al final se muestra si coincide.
+-- Proveedores: este script no los crea ni los modifica. El NIT del proveedor 33 lo define el script maestro.
 --
 -- Se puede ejecutar mas de una vez sin duplicar datos. Cada registro se identifica por una clave propia, nunca
 -- por un id autogenerado: documento, numero_venta, placa, numero_licencia y, en las rutas, el codigo
@@ -17,7 +19,7 @@
 -- Requiere el cliente mysql o Workbench (usa DELIMITER para el procedimiento temporal de la comprobacion).
 USE erp_frescura_total;
 
--- 0. COMPROBACION: sin lotes no se crean ventas incompletas.
+-- 0. COMPROBACION: sin lotes no se crean ventas incompletas, y no se mezcla con los datos del script maestro.
 DROP PROCEDURE IF EXISTS sp_verificar_lotes_prueba;
 DELIMITER $$
 CREATE PROCEDURE sp_verificar_lotes_prueba()
@@ -25,6 +27,10 @@ BEGIN
   IF (SELECT COUNT(*) FROM lotes_inventario) = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT =
       'Faltan lotes: cargue primero el SQL de productos y lotes de Inventario y ejecute de nuevo este script.';
+  END IF;
+  IF (SELECT COUNT(*) FROM ventas WHERE numero_venta NOT LIKE 'V-TEST-%') > 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT =
+      'Ya hay ventas ajenas a este script (p. ej. docs/database.sql). No lo ejecute junto con el maestro.';
   END IF;
 END$$
 DELIMITER ;
@@ -665,11 +671,3 @@ SELECT r.id_ruta, v.id_venta, 2, c.direccion, NULL, NULL, NULL
 FROM rutas_entrega r JOIN ventas v ON v.numero_venta = 'V-TEST-020' JOIN clientes c ON c.id_cliente = v.id_cliente
 WHERE r.nombre_ruta = 'RT-TEST-09 Usaquen' AND r.usuario_creacion = 'datos_prueba'
 AND NOT EXISTS (SELECT 1 FROM ventas_ruta x WHERE x.id_ruta = r.id_ruta AND x.id_venta = v.id_venta);
-
--- 10. VERIFICACION informativa (no modifica nada): proveedor 33 con el NIT ficticio de prueba.
-SELECT CASE
-         WHEN p.id_proveedor IS NULL THEN 'El proveedor 33 aun no existe: lo carga el modulo de Proveedores/Inventario.'
-         WHEN p.nit = '985731642-9' THEN 'El proveedor 33 coincide con el NIT ficticio de prueba 985731642-9.'
-         ELSE CONCAT('El proveedor 33 existe con otro NIT (', p.nit, '). No se modifico.')
-       END AS verificacion_proveedor_33
-FROM (SELECT 1) AS unico LEFT JOIN proveedores p ON p.id_proveedor = 33;
