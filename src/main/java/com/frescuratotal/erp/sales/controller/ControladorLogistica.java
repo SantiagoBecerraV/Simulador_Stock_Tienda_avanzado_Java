@@ -58,7 +58,10 @@ public class ControladorLogistica {
         try {
             dao.insertarVehiculo(placa, vacioANulo(modelo), capacidad);
         } catch (SQLException e) {
-            throw traducirDuplicado(e, "Ya existe un vehiculo con la placa '" + placa + "'.");
+            if (esDuplicado(e)) {
+                throw new IllegalArgumentException("Ya existe un vehiculo con la placa '" + placa + "'.");
+            }
+            throw e;
         }
     }
 
@@ -73,7 +76,10 @@ public class ControladorLogistica {
         try {
             dao.actualizarVehiculo(idVehiculo, placa, vacioANulo(modelo), capacidad);
         } catch (SQLException e) {
-            throw traducirDuplicado(e, "Ya existe un vehiculo con la placa '" + placa + "'.");
+            if (esDuplicado(e)) {
+                throw new IllegalArgumentException("Ya existe un vehiculo con la placa '" + placa + "'.");
+            }
+            throw e;
         }
     }
 
@@ -101,7 +107,10 @@ public class ControladorLogistica {
         try {
             dao.insertarConductor(nombre, licencia, vacioANulo(telefono), vacioANulo(email));
         } catch (SQLException e) {
-            throw traducirDuplicado(e, "Ya existe un conductor con la licencia '" + licencia + "'.");
+            if (esDuplicado(e)) {
+                throw new IllegalArgumentException("Ya existe un conductor con la licencia '" + licencia + "'.");
+            }
+            throw e;
         }
     }
 
@@ -117,7 +126,10 @@ public class ControladorLogistica {
         try {
             dao.actualizarConductor(idConductor, nombre, licencia, vacioANulo(telefono), vacioANulo(email));
         } catch (SQLException e) {
-            throw traducirDuplicado(e, "Ya existe un conductor con la licencia '" + licencia + "'.");
+            if (esDuplicado(e)) {
+                throw new IllegalArgumentException("Ya existe un conductor con la licencia '" + licencia + "'.");
+            }
+            throw e;
         }
     }
 
@@ -270,11 +282,9 @@ public class ControladorLogistica {
         }
     }
 
-    private SQLException traducirDuplicado(SQLException e, String mensaje) {
-        if (e.getErrorCode() == MYSQL_ENTRADA_DUPLICADA) {
-            throw new IllegalArgumentException(mensaje);
-        }
-        return e;
+    // true si MySQL rechazo el dato por repetir un valor unico (placa o licencia).
+    private static boolean esDuplicado(SQLException e) {
+        return e.getErrorCode() == MYSQL_ENTRADA_DUPLICADA;
     }
 
     private static String vacioANulo(String texto) {

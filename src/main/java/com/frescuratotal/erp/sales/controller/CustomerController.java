@@ -38,7 +38,10 @@ public class CustomerController {
         try {
             dao.insert(clean(c));
         } catch (SQLException e) {
-            throw translate(e, c.document());
+            if (esDuplicado(e)) {
+                throw new IllegalArgumentException("Ya existe un cliente con el documento '" + c.document() + "'.");
+            }
+            throw e;
         }
     }
 
@@ -49,7 +52,10 @@ public class CustomerController {
                 throw new IllegalArgumentException("No existe un cliente con id " + c.customerId() + ".");
             }
         } catch (SQLException e) {
-            throw translate(e, c.document());
+            if (esDuplicado(e)) {
+                throw new IllegalArgumentException("Ya existe un cliente con el documento '" + c.document() + "'.");
+            }
+            throw e;
         }
     }
 
@@ -81,11 +87,9 @@ public class CustomerController {
                 c.typeId(), null, null);
     }
 
-    private SQLException translate(SQLException e, String document) {
-        if (e.getErrorCode() == MYSQL_DUPLICATE_ENTRY) {
-            throw new IllegalArgumentException("Ya existe un cliente con el documento '" + document + "'.");
-        }
-        return e;
+    // true si MySQL rechazo el dato por repetir un valor unico (el documento).
+    private static boolean esDuplicado(SQLException e) {
+        return e.getErrorCode() == MYSQL_DUPLICATE_ENTRY;
     }
 
     private static boolean isBlank(String s) {
