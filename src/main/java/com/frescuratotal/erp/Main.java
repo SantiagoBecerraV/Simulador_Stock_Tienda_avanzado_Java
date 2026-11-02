@@ -7,8 +7,11 @@ import com.frescuratotal.erp.inventory.controller.ProductController;
 import com.frescuratotal.erp.inventory.view.ProductView;
 import com.frescuratotal.erp.inventory.controller.LotController;
 import com.frescuratotal.erp.inventory.view.LotView;
+import com.frescuratotal.erp.sales.view.CustomerMenu;
 import com.frescuratotal.erp.sales.view.MenuFacturacion;
+import com.frescuratotal.erp.sales.view.MenuLogistica;
 import com.frescuratotal.erp.sales.view.MenuVentas;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -29,13 +32,12 @@ public class Main {
                 case 1 -> productView.show();
                 case 2 -> supplierView.show();
                 case 3 -> lotView.show();
-                case 4 -> abrirVentas(scanner);
-                case 5 -> abrirFacturacion(scanner);
+                case 4, 5, 6, 7 -> abrirModuloDeVentas(option, scanner);
                 case 0 -> {
                     running = false;
                     System.out.println("Saliendo...\n");
                 }
-                default -> System.out.println("Opción inválida.\n");
+                default -> System.out.println("Opcion invalida.\n");
             }
         }
 
@@ -48,22 +50,23 @@ public class Main {
         System.out.println("2. Proveedores");
         System.out.println("3. Inventario");
         System.out.println("4. Ventas");
-        System.out.println("5. Facturación");
+        System.out.println("5. Facturacion");
+        System.out.println("6. Clientes");
+        System.out.println("7. Logistica");
         System.out.println("0. Salir");
-        System.out.print("Escoge una opción: ");
+        System.out.print("Escoge una opcion: ");
     }
 
-    private static void abrirVentas(Scanner scanner) {
+    // Los menus de ventas, facturacion, clientes y logistica comparten la misma conexion.
+    private static void abrirModuloDeVentas(int option, Scanner scanner) {
         try {
-            new MenuVentas(scanner, DatabaseConnection.getConnection()).ejecutar();
-        } catch (SQLException e) {
-            System.out.println("No se pudo conectar a la base de datos: " + e.getMessage());
-        }
-    }
-
-    private static void abrirFacturacion(Scanner scanner) {
-        try {
-            new MenuFacturacion(scanner, DatabaseConnection.getConnection()).ejecutar();
+            Connection conexion = DatabaseConnection.getConnection();
+            switch (option) {
+                case 4 -> new MenuVentas(scanner, conexion).ejecutar();
+                case 5 -> new MenuFacturacion(scanner, conexion).ejecutar();
+                case 6 -> new CustomerMenu(scanner, conexion).run();
+                default -> new MenuLogistica(scanner, conexion).ejecutar();
+            }
         } catch (SQLException e) {
             System.out.println("No se pudo conectar a la base de datos: " + e.getMessage());
         }
@@ -75,7 +78,7 @@ public class Main {
             try {
                 return Integer.parseInt(line);
             } catch (NumberFormatException e) {
-                System.out.print("Error: ingresa un número válido: ");
+                System.out.print("Error: ingresa un numero valido: ");
             }
         }
     }
