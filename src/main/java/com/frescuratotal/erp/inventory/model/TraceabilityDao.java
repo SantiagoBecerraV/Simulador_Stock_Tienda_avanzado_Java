@@ -1,7 +1,3 @@
-    /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.inventory.model;
 
 import com.frescuratotal.erp.common.DatabaseConnection;
@@ -11,12 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-/**
- *
- * @author admin
- */
 public class TraceabilityDao {
-    //Clase de Consultas de trazabilidad
     // Todos los lotes entregados por un proveedor, incluidos los rechazados (el historial nunca se elimina)
     public List<String> findLotsBySupplier(int supplierId) throws SQLException {
         String sql = "SELECT l.numero_lote, p.nombre, l.cantidad, l.fecha_vencimiento, l.id_estado "

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.suppliers.view;
 
 import com.frescuratotal.erp.suppliers.controller.SupplierController;
@@ -10,10 +6,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- *
- * @author admin
- */
 public class SupplierView {
 
     private final Scanner scanner;
@@ -101,7 +93,6 @@ public class SupplierView {
         System.out.println(done ? "Proveedor desactivado!!" : "proveedor no encontrado");
     }
     
-    //RELACION PROVEEDOR-PRODUCTO METODOS
     private void showCatalog() throws SQLException {
         int supplierId = askInt("Id del proveedor ");
         List<String> lines = controller.listCatalog(supplierId);
@@ -130,7 +121,6 @@ public class SupplierView {
         boolean removed = controller.removeFromCatalog(supplierId, productId);
         System.out.println(removed ? "El producto ha sido retirado exitosamente del catalogo!!!" : "Ese producto no se ha encontrado en este catalogo...");
     }   
-    // FIN PROVEEDOR PRODUCTO 
 
     private String ask(String prompt) {
         System.out.print(prompt);

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.inventory.model;
 
 import com.frescuratotal.erp.common.DatabaseConnection;
@@ -11,10 +7,6 @@ import java.sql.SQLException;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.Statement;
-/**
- *
- * @author admin
- */
 public class QualityDao {
 
     // Cambia el estado del lote y registra el historial en una sola transacción:
@@ -148,7 +140,6 @@ public class QualityDao {
         }
     }
 
-    //Metodos de registros de perdida
     // Descuenta cantidad de un lote como merma. El stock nunca puede ser menor a cero.
     public void registerWaste(int lotId, BigDecimal quantity, String reason, String user) throws SQLException {
         Connection connection = DatabaseConnection.getConnection();

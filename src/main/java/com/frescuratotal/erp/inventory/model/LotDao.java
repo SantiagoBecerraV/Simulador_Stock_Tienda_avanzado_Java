@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.inventory.model;
 
 import com.frescuratotal.erp.common.DatabaseConnection;
@@ -15,10 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.Optional;
-/**
- *
- * @author admin
- */
 public class LotDao {
 
     public List<Lot> findAll() throws SQLException {
@@ -106,7 +98,6 @@ public class LotDao {
         }
     }
     
-    //metodo de inspeccion dependiendo del id
     public Optional<Lot> findById(int lotId) throws SQLException {
         String sql = "SELECT id_lote, numero_lote, id_producto, id_proveedor, fecha_ingreso, "
                    + "fecha_vencimiento, cantidad_inicial, cantidad, precio_compra, precio_venta, "

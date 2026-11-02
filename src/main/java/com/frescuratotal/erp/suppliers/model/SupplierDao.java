@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.suppliers.model;
 
 import com.frescuratotal.erp.common.DatabaseConnection;
@@ -12,10 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author admin
- */
 public class SupplierDao {
 
     public List<Supplier> findAll() throws SQLException {
@@ -78,7 +70,6 @@ public class SupplierDao {
         }
     }
     
-    //RELACION PROVEEDOR PRODUCTOS METODOS
     // Retorna los productos que un proveedor puede suministrar, con el formato "3 | manzana | kg"
     public List<String> findCatalog(int supplierId) throws SQLException {
         String sql = "SELECT p.id_producto, p.nombre, p.unidad_medida "
@@ -137,7 +128,6 @@ public class SupplierDao {
             return statement.executeUpdate() > 0;
         }
     }
-    // FIN PROVEEDOR PRODUCTO
     
     // Convierte una fila de la tabla en un objeto Supplier.
     private Supplier mapRow(ResultSet rs) throws SQLException {

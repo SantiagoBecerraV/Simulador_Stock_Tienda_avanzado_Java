@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.inventory.view;
 
 import com.frescuratotal.erp.inventory.controller.ProductController;
@@ -10,10 +6,6 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
-/**
- *
- * @author admin
- */
 public class ProductView {
 
     private final Scanner scanner;

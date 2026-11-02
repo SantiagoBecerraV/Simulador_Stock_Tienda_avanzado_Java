@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.inventory.view;
 
 import com.frescuratotal.erp.inventory.controller.LotController;
@@ -12,10 +8,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
-/**
- *
- * @author admin
- */
 public class LotView {
 
     private final Scanner scanner;
@@ -94,7 +86,6 @@ public class LotView {
         System.out.println(controller.runExpirationCheck());
     }
     
-    //metodo del quarantine
     private void quarantineLot() throws SQLException {
         int lotId = askInt("ID del lote a poner en cuarentena: ");
         String reason = ask("Motivo (empaque en mal estado, mal olor, etc.): ");
@@ -104,7 +95,6 @@ public class LotView {
         System.out.println("Lote puesto en cuarentena");
     }
     
-    //Metodo de inspeccion
     private void inspectLot() throws SQLException {
         int lotId = askInt("Id del lote a inspeccionar: ");
         String result = ask("Resultado (A = aceptado, R = rechazado): ");
@@ -125,7 +115,6 @@ public class LotView {
         System.out.println(approved ? "Lote aprobado !!" : "Lote rechazado y enviado a merma....");
     }
     
-    //metodo de registro de merma
     private void registerWaste() throws SQLException {
         int lotId = askInt("Id del Lote: ");
         BigDecimal quantity = askDecimal("Cantidad perdida: ");
@@ -136,7 +125,6 @@ public class LotView {
         System.out.println("Perdida registrada y stock actualizado !!!");
     }
     
-    //metodos de consultas de trazabilidad
     private void lotsBySupplier() throws SQLException {
         int supplierId = askInt("ID del proveedor: ");
         printLines(controller.lotsBySupplier(supplierId), "Este proveedor aun no tiene lotes");

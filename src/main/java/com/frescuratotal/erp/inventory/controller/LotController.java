@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frescuratotal.erp.inventory.controller;
 
 import com.frescuratotal.erp.inventory.model.Lot;
@@ -15,10 +11,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import com.frescuratotal.erp.inventory.model.QualityDao;
 import com.frescuratotal.erp.inventory.model.TraceabilityDao;
-/**
- *
- * @author admin
- */
 public class LotController {
 
     private final LotDao dao = new LotDao();
@@ -70,7 +62,6 @@ public class LotController {
                 + now.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
     }
 
-    //metodo de el quality mejor dicho del registro de cuarentena
     public void quarantineLot(int lotId, String reason, String user) throws SQLException {
         if (lotId <= 0) {
                 throw new IllegalArgumentException("El ID del lote debe ser un numero positivo");
@@ -84,7 +75,6 @@ public class LotController {
         qualityDao.quarantine(lotId, reason, user);
     }
     
-    //metodo de inspeccion
     public void inspectLot(int lotId, boolean approved, String inspector, String notes) throws SQLException {
         if (lotId <= 0) {
             throw new IllegalArgumentException("El ID del lote debe ser un numero positivo...");
@@ -121,7 +111,6 @@ public class LotController {
         return LotStatus.AVAILABLE;
     }
 
-    //metodo de registro de merma
     public void registerWaste(int lotId, BigDecimal quantity, String reason, String user) throws SQLException {
         if (lotId <= 0) {
             throw new IllegalArgumentException("El id del lote debe ser un numero positivo...");
@@ -139,7 +128,6 @@ public class LotController {
     }
 
     
-    //metodo de  consultas de trazabilidad
     public List<String> lotsBySupplier(int supplierId) throws SQLException {
         if (supplierId <= 0) {
             throw new IllegalArgumentException("El ID del proveedor debe ser un numero positivo");
