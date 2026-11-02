@@ -27,7 +27,7 @@ Las librerias (driver MySQL, OpenPDF y ZXing para el PDF y el QR) las descarga M
 
 > **Advertencia:** el script empieza con `DROP DATABASE IF EXISTS erp_frescura_total`. Al ejecutarlo completo se borra esa base y se crea de nuevo. No lo ejecute sobre datos que quiera conservar. Para cargar solo los datos sobre una base ya creada, ejecute desde la linea `SECCION 2: DML` en adelante.
 
-**Orden de ejecucion:** solo `docs/database.sql`. El archivo `sql/datos_prueba_ventas_logistica.sql` es un complemento opcional que **no** debe ejecutarse despues del maestro: ya trae sus propios clientes, ventas y rutas, y el complemento se detiene con un error si encuentra ventas ajenas. Solo sirve para una base con la estructura y los lotes pero sin ventas.
+**Orden de ejecucion:** usa `docs/database.sql` como el unico script de base de datos del proyecto.
 
 ### Credenciales de conexion
 
