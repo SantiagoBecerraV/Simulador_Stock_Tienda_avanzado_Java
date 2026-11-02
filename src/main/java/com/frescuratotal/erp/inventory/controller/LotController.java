@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import com.frescuratotal.erp.inventory.model.QualityDao;
+import com.frescuratotal.erp.inventory.model.TraceabilityDao;
 /**
  *
  * @author admin
@@ -22,6 +23,7 @@ public class LotController {
 
     private final LotDao dao = new LotDao();
     private final QualityDao qualityDao = new QualityDao();
+    private final TraceabilityDao traceabilityDao = new TraceabilityDao();
     
     private static final int NEAR_EXPIRY_DAYS = 7;
 
@@ -134,6 +136,26 @@ public class LotController {
             throw new IllegalArgumentException("El nombre del usuario es obligatorio!!");
         }
         qualityDao.registerWaste(lotId, quantity, reason.trim(), user.trim());
+    }
+
+    
+    //metodo de  consultas de trazabilidad
+    public List<String> lotsBySupplier(int supplierId) throws SQLException {
+        if (supplierId <= 0) {
+            throw new IllegalArgumentException("El ID del proveedor debe ser un numero positivo");
+        }
+        return traceabilityDao.findLotsBySupplier(supplierId);
+    }
+
+    public List<String> sellableStock() throws SQLException {
+        return traceabilityDao.findSellableStockByProduct();
+    }
+
+    public List<String> lotHistory(int lotId) throws SQLException {
+        if (lotId <= 0) {
+            throw new IllegalArgumentException("El ID del lote debe ser un numero positivo");
+        }
+        return traceabilityDao.findLotHistory(lotId);
     }
     
     private void validate(int supplierId, int productId, LocalDate expirationDate,

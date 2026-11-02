@@ -37,6 +37,9 @@ public class LotView {
             System.out.println("4. Poner lote en cuarentena");
             System.out.println("5. Inspeccionar lote en cuarentena");    
             System.out.println("6. Registrar Perdidas (merma)");
+            System.out.println("7. Lotes por proveedor");
+            System.out.println("8. Stock disponible para la venta por producto");
+            System.out.println("9. Historial de un lote");
             System.out.println("0. Volver");
             System.out.print("Elija una opcion: ");
 
@@ -50,6 +53,9 @@ public class LotView {
                     case "4" -> quarantineLot();
                     case "5" -> inspectLot();
                     case "6" -> registerWaste();    
+                    case "7" -> lotsBySupplier();
+                    case "8" -> sellableStock();
+                    case "9" -> lotHistory();                    
                     case "0" -> back = true;
                     default -> System.out.println("Opcion invalida!!");
                 }
@@ -128,6 +134,30 @@ public class LotView {
 
         controller.registerWaste(lotId, quantity, reason, user);
         System.out.println("Perdida registrada y stock actualizado !!!");
+    }
+    
+    //metodos de consultas de trazabilidad
+    private void lotsBySupplier() throws SQLException {
+        int supplierId = askInt("ID del proveedor: ");
+        printLines(controller.lotsBySupplier(supplierId), "Este proveedor aun no tiene lotes");
+    }
+
+    private void sellableStock() throws SQLException {
+        printLines(controller.sellableStock(), "No hay stock disponible para la venta");
+    }
+
+    private void lotHistory() throws SQLException {
+        int lotId = askInt("Id del lote: ");
+        printLines(controller.lotHistory(lotId), "Este lote aún no tiene historial");
+    }
+
+    private void printLines(List<String> lines, String emptyMessage) {
+        if (lines.isEmpty()) {
+            System.out.println(emptyMessage);
+        }
+        for (String line : lines) {
+            System.out.println(line);
+        }
     }
     
     private String ask(String prompt) {
