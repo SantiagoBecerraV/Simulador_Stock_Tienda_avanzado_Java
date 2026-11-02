@@ -1,0 +1,209 @@
+@startuml
+' Diagrama de clases: clientes, ventas, facturación y logística (com.frescuratotal.erp).
+' Para regenerar el PNG: java -jar plantuml.jar -tpng docs/diagrama_clases.puml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontSize 11
+skinparam ranksep 40
+skinparam nodesep 25
+title Frescura Total ERP - Clientes, Ventas, Facturación y Logística
+
+package "customers" {
+  class CustomerMenu <<view>> {
+    +ejecutar()
+  }
+  class CustomerController <<controller>> {
+    +list()
+    +get(id)
+    +create(c)
+    +update(c)
+    +delete(id)
+  }
+  class CustomerDao <<dao>> {
+    +findAll()
+    +findById(id)
+    +insert(c)
+    +update(c)
+    +delete(id)
+    +hasSales(id)
+    +findTypes()
+  }
+  class Customer <<record>> {
+    customerId
+    name
+    document
+    email
+    phone
+    address
+    typeId
+    typeName
+  }
+}
+
+package "sales" {
+  class MenuVentas <<view>> {
+    +ejecutar()
+  }
+  class ControladorVentas <<controller>> {
+    +TASA_IMPUESTO
+    +buscarCliente(id)
+    +listarLotes()
+    +agregarLinea(pedido, lote, cantidad)
+    +confirmarVenta(idCliente, pedido)
+  }
+  class VentasDao <<dao>> {
+    +listarLotesVendibles()
+    +registrarVenta(idCliente, lineas)
+  }
+  class Lote <<record>> {
+    idLote
+    numeroLote
+    producto
+    fechaVencimiento
+    cantidad
+    precioVenta
+    estado
+    tasaDescuento
+  }
+  class LineaPedido <<record>> {
+    cantidad
+    tasaImpuesto
+    +subtotal()
+    +montoDescuento()
+    +montoImpuesto()
+    +totalLinea()
+  }
+}
+
+package "billing" {
+  class MenuFacturacion <<view>> {
+    +ejecutar()
+  }
+  class ControladorFacturacion <<controller>> {
+    +generarFactura(idVenta, carpeta)
+  }
+  class FacturaDao <<dao>> {
+    +ventaFacturable(idVenta)
+    +insertar(idVenta, numero, cufe, qr)
+    +buscarPorVenta(idVenta)
+  }
+  class FacturaPdf <<view>> {
+    +generar(factura, destino)
+  }
+  class Factura <<record>> {
+    numeroFactura
+    cufe (simulado)
+    enlaceQr (simulado)
+    subtotal
+    totalDescuento
+    montoImpuesto
+    montoTotal
+  }
+  class "Factura.Empresa" as Empresa <<record>> {
+    nombre
+    nit
+  }
+  class "Factura.LineaFactura" as LineaFactura <<record>> {
+    producto
+    cantidad
+    precioUnitario
+    totalLinea
+  }
+}
+
+package "logistics" {
+  class MenuLogistica <<view>> {
+    +ejecutar()
+  }
+  class ControladorLogistica <<controller>> {
+    +crearVehiculo()
+    +crearConductor()
+    +crearRuta()
+    +asignarVehiculoYConductor()
+    +asignarVenta()
+    +iniciarDespacho(idRuta)
+    +confirmarEntrega(idRuta, idVenta)
+  }
+  class LogisticaDao <<dao>> {
+    +listarVentasEnPreparacion()
+    +listarVehiculos()
+    +listarConductores()
+    +listarRutas()
+    +iniciarDespacho(idRuta)
+    +confirmarEntrega(idRuta, idVenta)
+  }
+  class VentaEnPreparacion <<record>>
+  class Vehiculo <<record>>
+  class Conductor <<record>>
+  class Ruta <<record>>
+  class EntregaRuta <<record>>
+  enum EstadoVenta {
+    IN_PREPARATION
+    IN_TRANSIT
+    DELIVERED
+  }
+  enum EstadoRuta {
+    PLANIFICADA
+    EN_TRANSITO
+    COMPLETADA
+    CANCELADA
+  }
+  enum EstadoVehiculo {
+    ACTIVO
+    INACTIVO
+    MANTENIMIENTO
+  }
+}
+
+' ---- customers ----
+CustomerMenu --> CustomerController
+CustomerMenu ..> CustomerDao : crea
+CustomerController --> CustomerDao
+CustomerDao ..> Customer
+
+' ---- sales ----
+MenuVentas --> ControladorVentas
+MenuVentas ..> VentasDao : crea
+MenuVentas ..> CustomerDao : crea
+ControladorVentas --> VentasDao
+ControladorVentas --> CustomerDao : valida el cliente
+ControladorVentas ..> Customer
+ControladorVentas ..> LineaPedido
+VentasDao ..> Lote
+VentasDao ..> LineaPedido
+LineaPedido --> Lote
+
+' ---- billing ----
+MenuFacturacion --> ControladorFacturacion
+MenuFacturacion ..> FacturaDao : crea
+ControladorFacturacion --> FacturaDao
+ControladorFacturacion ..> FacturaPdf
+ControladorFacturacion ..> Factura
+FacturaDao --> CustomerDao : datos del cliente
+FacturaDao ..> Factura
+FacturaPdf ..> Factura
+Factura --> Customer
+Factura *-- Empresa
+Factura *-- "1..*" LineaFactura
+
+' ---- logistics ----
+MenuLogistica --> ControladorLogistica
+MenuLogistica ..> LogisticaDao : crea
+ControladorLogistica --> LogisticaDao
+ControladorLogistica ..> EstadoVehiculo
+ControladorLogistica ..> EstadoRuta
+LogisticaDao ..> VentaEnPreparacion
+LogisticaDao ..> Vehiculo
+LogisticaDao ..> Conductor
+LogisticaDao ..> Ruta
+LogisticaDao ..> EntregaRuta
+LogisticaDao ..> EstadoVenta
+LogisticaDao ..> EstadoRuta
+Vehiculo --> EstadoVehiculo
+Ruta --> EstadoRuta
+
+' ---- relación entre módulos por la base de datos (tablas compartidas) ----
+note "Ventas, Facturación y Logística no se llaman entre sí:\nse relacionan por las tablas ventas, detalles_venta, facturas y ventas_ruta.\nSales guarda la venta como 'Registrada'. Logística trabaja con ventas\n'En Preparacion' y las lleva a En Transito -> Entregada." as N1
+@enduml
