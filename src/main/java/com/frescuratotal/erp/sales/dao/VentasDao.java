@@ -2,6 +2,7 @@ package com.frescuratotal.erp.sales.dao;
 
 import com.frescuratotal.erp.sales.model.LineaPedido;
 import com.frescuratotal.erp.sales.model.Lote;
+import com.frescuratotal.erp.sales.model.VentaRegistrada;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,6 +59,30 @@ public class VentasDao {
             }
         }
         return lotes;
+    }
+
+    public List<VentaRegistrada> listarVentasRegistradas() throws SQLException {
+        String sql = "SELECT v.id_venta, v.numero_venta, c.nombre, v.monto_total FROM ventas v "
+                + "JOIN clientes c ON c.id_cliente = v.id_cliente "
+                + "JOIN estados_venta e ON e.id_estado = v.id_estado "
+                + "WHERE e.nombre = 'Registrada' ORDER BY v.fecha_venta, v.id_venta";
+        List<VentaRegistrada> ventas = new ArrayList<>();
+        try (PreparedStatement ps = conexion.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ventas.add(new VentaRegistrada(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getBigDecimal(4)));
+            }
+        }
+        return ventas;
+    }
+
+    // Registrada -> En Preparacion. Solo cambia si la venta sigue Registrada (no pisa otros estados).
+    public boolean pasarAPreparacion(int idVenta) throws SQLException {
+        String sql = "UPDATE ventas SET id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = 'En Preparacion') "
+                + "WHERE id_venta = ? AND id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = 'Registrada')";
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setInt(1, idVenta);
+            return ps.executeUpdate() == 1;
+        }
     }
 
     // Venta + detalles + descuento de stock en UNA transaccion: si algo falla, rollback de todo.

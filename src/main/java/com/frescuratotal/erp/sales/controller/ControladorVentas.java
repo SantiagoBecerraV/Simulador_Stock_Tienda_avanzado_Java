@@ -5,6 +5,7 @@ import com.frescuratotal.erp.sales.model.Customer;
 import com.frescuratotal.erp.sales.dao.VentasDao;
 import com.frescuratotal.erp.sales.model.LineaPedido;
 import com.frescuratotal.erp.sales.model.Lote;
+import com.frescuratotal.erp.sales.model.VentaRegistrada;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
@@ -50,6 +51,17 @@ public class ControladorVentas {
                     + lote.numeroLote() + ".");
         }
         pedido.add(new LineaPedido(lote, cantidad, TASA_IMPUESTO));
+    }
+
+    public List<VentaRegistrada> listarVentasRegistradas() throws SQLException {
+        return dao.listarVentasRegistradas();
+    }
+
+    // Logistica solo ve ventas En Preparacion; este paso las deja listas para despacho.
+    public void pasarAPreparacion(int idVenta) throws SQLException {
+        if (!dao.pasarAPreparacion(idVenta)) {
+            throw new IllegalArgumentException("La venta " + idVenta + " no existe o no esta en estado Registrada.");
+        }
     }
 
     // Devuelve el id de la venta registrada. El DAO vuelve a verificar las existencias.

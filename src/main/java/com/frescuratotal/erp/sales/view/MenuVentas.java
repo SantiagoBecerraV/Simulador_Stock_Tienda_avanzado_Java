@@ -8,6 +8,7 @@ import com.frescuratotal.erp.sales.dao.FacturaDao;
 import com.frescuratotal.erp.sales.dao.VentasDao;
 import com.frescuratotal.erp.sales.model.LineaPedido;
 import com.frescuratotal.erp.sales.model.Lote;
+import com.frescuratotal.erp.sales.model.VentaRegistrada;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -36,7 +37,7 @@ public class MenuVentas {
     public void ejecutar() {
         while (true) {
             System.out.println("\n--- Ventas ---");
-            System.out.println("1. Nueva venta  2. Ver lotes disponibles  0. Volver");
+            System.out.println("1. Nueva venta  2. Ver lotes disponibles  3. Pasar venta a preparacion  0. Volver");
             String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;
@@ -45,6 +46,7 @@ public class MenuVentas {
                 switch (opcion) {
                     case "1" -> nuevaVenta();
                     case "2" -> mostrarLotes(controlador.listarLotes());
+                    case "3" -> pasarAPreparacion();
                     default -> System.out.println("Opcion no valida.");
                 }
             } catch (IllegalArgumentException e) {
@@ -92,6 +94,20 @@ public class MenuVentas {
         } else {
             System.out.println("Venta cancelada.");
         }
+    }
+
+    private void pasarAPreparacion() throws SQLException {
+        List<VentaRegistrada> ventas = controlador.listarVentasRegistradas();
+        if (ventas.isEmpty()) {
+            System.out.println("No hay ventas registradas pendientes.");
+            return;
+        }
+        System.out.println("Ventas registradas pendientes:");
+        for (VentaRegistrada v : ventas) {
+            System.out.printf("  #%d | %s | %s | $%s%n", v.idVenta(), v.numeroVenta(), v.cliente(), v.montoTotal());
+        }
+        controlador.pasarAPreparacion(convertirEntero(preguntar("Id de la venta a pasar a preparacion")));
+        System.out.println("Venta en preparacion: ya aparece en el panel de Logistica.");
     }
 
     // La factura se crea despues de guardar la venta: si falla, la venta no se pierde y se puede
