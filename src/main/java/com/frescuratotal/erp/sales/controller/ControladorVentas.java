@@ -16,8 +16,24 @@ import java.util.List;
  */
 public class ControladorVentas {
 
-    // El esquema no define una tarifa de IVA. Se deja en 0 hasta que el negocio indique la oficial.
-    public static final BigDecimal TASA_IMPUESTO = BigDecimal.ZERO;
+    // Ni el esquema ni el enunciado definen una tarifa de IVA, asi que NO es un dato oficial.
+    // Valor de demostracion: 0 por defecto; para probar otro, ejecutar con -Derp.tasaImpuesto=0.10
+    // (fraccion entre 0 y 1). La tarifa real debe confirmarse con el negocio antes de usarla.
+    public static final BigDecimal TASA_IMPUESTO = leerTasaImpuesto();
+
+    private static BigDecimal leerTasaImpuesto() {
+        String texto = System.getProperty("erp.tasaImpuesto", "0");
+        try {
+            BigDecimal tasa = new BigDecimal(texto);
+            if (tasa.signum() >= 0 && tasa.compareTo(BigDecimal.ONE) <= 0) {
+                return tasa;
+            }
+        } catch (NumberFormatException e) {
+            // Se informa abajo y se usa 0.
+        }
+        System.out.println("Tasa de impuesto invalida (" + texto + "): se usa 0. Debe estar entre 0 y 1, por ejemplo 0.10.");
+        return BigDecimal.ZERO;
+    }
 
     private final VentasDao dao;
     private final CustomerDao clientes;
