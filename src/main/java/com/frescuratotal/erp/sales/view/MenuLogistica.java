@@ -42,42 +42,47 @@ public class MenuLogistica {
                 case "0" -> {
                     return;
                 }
-                case "1" -> ejecutarSeguro("1");
-                case "2" -> submenu("Vehiculos", "2", "Listar", "Crear", "Cambiar estado", "Editar", "Eliminar");
-                case "3" -> submenu("Conductores", "3", "Listar", "Crear", "Activar/desactivar", "Editar", "Eliminar");
-                case "4" -> submenu("Rutas", "4", "Listar", "Crear", "Ver ventas", "Editar", "Cancelar");
-                case "5" -> submenu("Asignaciones", "5", "Asignar vehiculo y conductor a ruta",
-                        "Asignar venta a ruta", "Quitar venta de ruta");
-                case "6" -> submenu("Despacho y entregas", "6", "Iniciar despacho", "Confirmar entrega");
+                case "1" -> ejecutarSeguro(this::mostrarVentasEnPreparacion, "");
+                case "2" -> submenu("Vehiculos", this::opcionVehiculos,
+                        "Listar", "Crear", "Cambiar estado", "Editar", "Eliminar");
+                case "3" -> submenu("Conductores", this::opcionConductores,
+                        "Listar", "Crear", "Activar/desactivar", "Editar", "Eliminar");
+                case "4" -> submenu("Rutas", this::opcionRutas,
+                        "Listar", "Crear", "Ver ventas", "Editar", "Cancelar");
+                case "5" -> submenu("Asignaciones", this::opcionAsignaciones,
+                        "Asignar vehiculo y conductor a ruta", "Asignar venta a ruta", "Quitar venta de ruta");
+                case "6" -> submenu("Despacho y entregas", this::opcionDespacho,
+                        "Iniciar despacho", "Confirmar entrega");
                 default -> System.out.println("Opcion no valida.");
             }
         }
     }
 
-    // Submenu simple: la opcion N de la lista ejecuta el codigo interno prefijo + N (por ejemplo "2" + "1" = "21").
-    private void submenu(String titulo, String prefijo, String... opciones) {
+    // Lo que hace un submenu con la opcion elegida (por ejemplo opcionVehiculos).
+    private interface AccionDeMenu {
+        void ejecutar(String opcion) throws SQLException;
+    }
+
+    // Muestra el submenu hasta que el usuario elige 0. Cada submenu decide sus opciones en su propio switch.
+    private void submenu(String titulo, AccionDeMenu accion, String... nombresOpciones) {
         while (true) {
             System.out.println("\n--- " + titulo + " ---");
-            for (int i = 0; i < opciones.length; i++) {
-                System.out.println((i + 1) + ". " + opciones[i]);
+            for (int i = 0; i < nombresOpciones.length; i++) {
+                System.out.println((i + 1) + ". " + nombresOpciones[i]);
             }
             System.out.println("0. Volver");
             String opcion = preguntar("Opcion");
             if (opcion.equals("0")) {
                 return;
             }
-            boolean valida = opcion.matches("[1-9]") && Integer.parseInt(opcion) <= opciones.length;
-            if (valida) {
-                ejecutarSeguro(prefijo + opcion);
-            } else {
-                System.out.println("Opcion no valida.");
-            }
+            ejecutarSeguro(accion, opcion);
         }
     }
 
-    private void ejecutarSeguro(String codigo) {
+    // Un error de datos o de base de datos se muestra y el menu sigue funcionando.
+    private void ejecutarSeguro(AccionDeMenu accion, String opcion) {
         try {
-            ejecutarOpcion(codigo);
+            accion.ejecutar(opcion);
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         } catch (SQLException e) {
@@ -85,26 +90,31 @@ public class MenuLogistica {
         }
     }
 
-    private void ejecutarOpcion(String opcion) throws SQLException {
+    // La opcion no se usa: esta accion no tiene submenu.
+    private void mostrarVentasEnPreparacion(String opcion) throws SQLException {
+        controlador.listarVentasEnPreparacion().forEach(v -> System.out.printf(
+                "#%d | %s | cliente: %s | direccion: %s | total $%s | %s%n", v.idVenta(),
+                v.numeroVenta(), v.cliente(), v.direccion(), v.montoTotal(),
+                v.idRuta() == null ? "sin ruta asignada" : "ya asignada a la ruta #" + v.idRuta()));
+    }
+
+    // 1 Listar, 2 Crear, 3 Cambiar estado, 4 Editar, 5 Eliminar.
+    private void opcionVehiculos(String opcion) throws SQLException {
         switch (opcion) {
-            case "1" -> controlador.listarVentasEnPreparacion().forEach(v -> System.out.printf(
-                    "#%d | %s | cliente: %s | direccion: %s | total $%s | %s%n", v.idVenta(),
-                    v.numeroVenta(), v.cliente(), v.direccion(), v.montoTotal(),
-                    v.idRuta() == null ? "sin ruta asignada" : "ya asignada a la ruta #" + v.idRuta()));
-            case "21" -> controlador.listarVehiculos().forEach(v -> System.out.printf(
+            case "1" -> controlador.listarVehiculos().forEach(v -> System.out.printf(
                     "#%d | %s | %s | capacidad: %s | %s%n", v.idVehiculo(), v.placa(), v.modelo(),
                     v.capacidad(), v.estado().valorBd()));
-            case "22" -> {
+            case "2" -> {
                 controlador.crearVehiculo(preguntar("Placa"), preguntar("Modelo (opcional)"),
                         leerDecimalOpcional(preguntar("Capacidad (opcional)")));
                 System.out.println("Vehiculo creado.");
             }
-            case "23" -> {
+            case "3" -> {
                 int id = leerEntero(preguntar("Id del vehiculo"));
                 controlador.cambiarEstadoVehiculo(id, preguntarEstadoVehiculo());
                 System.out.println("Estado del vehiculo actualizado.");
             }
-            case "24" -> {
+            case "4" -> {
                 // Enter en un campo conserva su valor actual.
                 Vehiculo v = controlador.obtenerVehiculo(leerEntero(preguntar("Id del vehiculo")));
                 controlador.actualizarVehiculo(v.idVehiculo(), conservar("Placa", v.placa()),
@@ -112,67 +122,88 @@ public class MenuLogistica {
                         leerDecimalOpcional(conservar("Capacidad", v.capacidad() == null ? "" : v.capacidad().toPlainString())));
                 System.out.println("Vehiculo actualizado.");
             }
-            case "25" -> {
+            case "5" -> {
                 controlador.eliminarVehiculo(leerEntero(preguntar("Id del vehiculo")));
                 System.out.println("Vehiculo eliminado.");
             }
-            case "31" -> controlador.listarConductores().forEach(c -> System.out.printf(
+            default -> System.out.println("Opcion no valida.");
+        }
+    }
+
+    // 1 Listar, 2 Crear, 3 Activar/desactivar, 4 Editar, 5 Eliminar.
+    private void opcionConductores(String opcion) throws SQLException {
+        switch (opcion) {
+            case "1" -> controlador.listarConductores().forEach(c -> System.out.printf(
                     "#%d | %s | licencia: %s | tel: %s | %s%n", c.idConductor(), c.nombre(), c.numeroLicencia(),
                     c.telefono(), c.activo() ? "Activo" : "Inactivo"));
-            case "32" -> {
+            case "2" -> {
                 controlador.crearConductor(preguntar("Nombre"), preguntar("Numero de licencia"),
                         preguntar("Telefono (opcional)"), preguntar("Correo (opcional)"));
                 System.out.println("Conductor creado.");
             }
-            case "33" -> {
+            case "3" -> {
                 int id = leerEntero(preguntar("Id del conductor"));
                 boolean activo = preguntar("Activo? (s/n)").equalsIgnoreCase("s");
                 controlador.cambiarActivoConductor(id, activo);
                 System.out.println("Conductor actualizado.");
             }
-            case "34" -> {
+            case "4" -> {
                 Conductor c = controlador.obtenerConductor(leerEntero(preguntar("Id del conductor")));
                 controlador.actualizarConductor(c.idConductor(), conservar("Nombre", c.nombre()),
                         conservar("Numero de licencia", c.numeroLicencia()), conservar("Telefono", c.telefono()),
                         conservar("Correo", c.email()));
                 System.out.println("Conductor actualizado.");
             }
-            case "35" -> {
+            case "5" -> {
                 controlador.eliminarConductor(leerEntero(preguntar("Id del conductor")));
                 System.out.println("Conductor eliminado.");
             }
-            case "41" -> controlador.listarRutas().forEach(r -> System.out.printf(
+            default -> System.out.println("Opcion no valida.");
+        }
+    }
+
+    // 1 Listar, 2 Crear, 3 Ver ventas, 4 Editar, 5 Cancelar.
+    private void opcionRutas(String opcion) throws SQLException {
+        switch (opcion) {
+            case "1" -> controlador.listarRutas().forEach(r -> System.out.printf(
                     "#%d | %s | %s | vehiculo: %s | conductor: %s | salida estimada: %s%n", r.idRuta(),
                     r.nombreRuta(), r.estado().valorBd(), r.placa() == null ? "-" : r.placa(),
                     r.conductor() == null ? "-" : r.conductor(), r.salidaEstimada()));
-            case "42" -> {
+            case "2" -> {
                 controlador.crearRuta(preguntar("Nombre de la ruta"),
                         leerFechaOpcional(preguntar("Salida estimada aaaa-MM-dd HH:mm (opcional)")),
                         leerFechaOpcional(preguntar("Llegada estimada aaaa-MM-dd HH:mm (opcional)")));
                 System.out.println("Ruta creada en estado Planificada.");
             }
-            case "43" -> controlador.listarEntregas(leerEntero(preguntar("Id de la ruta"))).forEach(e ->
+            case "3" -> controlador.listarEntregas(leerEntero(preguntar("Id de la ruta"))).forEach(e ->
                     System.out.printf("orden %s | venta #%d (%s) | destino: %s | entregada: %s | recibio: %s | obs: %s%n",
                             e.ordenEntrega(), e.idVenta(), e.numeroVenta(), e.direccionDestino(),
                             e.fechaEntrega() == null ? "pendiente" : e.fechaEntrega(), e.recibidoPor(),
                             e.observaciones()));
-            case "44" -> {
+            case "4" -> {
                 Ruta r = controlador.obtenerRuta(leerEntero(preguntar("Id de la ruta")));
                 controlador.actualizarRuta(r.idRuta(), conservar("Nombre de la ruta", r.nombreRuta()),
                         leerFechaOpcional(conservar("Salida estimada aaaa-MM-dd HH:mm", formatoFecha(r.salidaEstimada()))),
                         leerFechaOpcional(conservar("Llegada estimada aaaa-MM-dd HH:mm", formatoFecha(r.llegadaEstimada()))));
                 System.out.println("Ruta actualizada.");
             }
-            case "45" -> {
+            case "5" -> {
                 controlador.cancelarRuta(leerEntero(preguntar("Id de la ruta")));
                 System.out.println("Ruta cancelada. Sus ventas quedaron libres para asignarlas a otra ruta.");
             }
-            case "51" -> {
+            default -> System.out.println("Opcion no valida.");
+        }
+    }
+
+    // 1 Vehiculo y conductor a ruta, 2 Venta a ruta, 3 Quitar venta de ruta.
+    private void opcionAsignaciones(String opcion) throws SQLException {
+        switch (opcion) {
+            case "1" -> {
                 controlador.asignarVehiculoYConductor(leerEntero(preguntar("Id de la ruta")),
                         leerEntero(preguntar("Id del vehiculo")), leerEntero(preguntar("Id del conductor")));
                 System.out.println("Vehiculo y conductor asignados.");
             }
-            case "52" -> {
+            case "2" -> {
                 int idRuta = leerEntero(preguntar("Id de la ruta"));
                 int idVenta = leerEntero(preguntar("Id de la venta"));
                 String orden = preguntar("Orden de entrega (Enter = siguiente)");
@@ -180,16 +211,23 @@ public class MenuLogistica {
                 controlador.asignarVenta(idRuta, idVenta, orden.isEmpty() ? null : leerEntero(orden), direccion);
                 System.out.println("Venta asignada a la ruta.");
             }
-            case "53" -> {
+            case "3" -> {
                 controlador.quitarVentaDeRuta(leerEntero(preguntar("Id de la ruta")),
                         leerEntero(preguntar("Id de la venta")));
                 System.out.println("Venta quitada de la ruta.");
             }
-            case "61" -> {
+            default -> System.out.println("Opcion no valida.");
+        }
+    }
+
+    // 1 Iniciar despacho, 2 Confirmar entrega.
+    private void opcionDespacho(String opcion) throws SQLException {
+        switch (opcion) {
+            case "1" -> {
                 controlador.iniciarDespacho(leerEntero(preguntar("Id de la ruta")));
                 System.out.println("Despacho iniciado: la ruta y sus ventas quedaron En Transito.");
             }
-            case "62" -> {
+            case "2" -> {
                 boolean completada = controlador.confirmarEntrega(leerEntero(preguntar("Id de la ruta")),
                         leerEntero(preguntar("Id de la venta")), preguntar("Recibido por"),
                         preguntar("Observaciones (opcional)"));
