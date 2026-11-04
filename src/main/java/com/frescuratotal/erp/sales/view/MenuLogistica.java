@@ -1,5 +1,6 @@
 package com.frescuratotal.erp.sales.view;
 
+import com.frescuratotal.erp.common.TablaConsola;
 import com.frescuratotal.erp.sales.controller.ControladorLogistica;
 import com.frescuratotal.erp.sales.dao.LogisticaDao;
 import com.frescuratotal.erp.sales.model.Conductor;
@@ -12,6 +13,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -92,18 +95,90 @@ public class MenuLogistica {
 
     // La opcion no se usa: esta accion no tiene submenu.
     private void mostrarVentasEnPreparacion(String opcion) throws SQLException {
-        controlador.listarVentasEnPreparacion().forEach(v -> System.out.printf(
-                "#%d | %s | cliente: %s | direccion: %s | total $%s | %s%n", v.idVenta(),
-                v.numeroVenta(), v.cliente(), v.direccion(), v.montoTotal(),
-                v.idRuta() == null ? "sin ruta asignada" : "ya asignada a la ruta #" + v.idRuta()));
+        var ventas = controlador.listarVentasEnPreparacion();
+        if (ventas.isEmpty()) {
+            System.out.println("No hay ventas en preparacion.");
+            return;
+        }
+
+        List<String[]> filas = new ArrayList<>();
+        for (var venta : ventas) {
+            String ruta = venta.idRuta() == null ? "Sin ruta" : "Ruta #" + venta.idRuta();
+            filas.add(new String[]{String.valueOf(venta.idVenta()), venta.numeroVenta(), venta.cliente(),
+                    venta.direccion(), "$" + venta.montoTotal(), ruta});
+        }
+        TablaConsola.imprimir(new String[]{"Id venta", "Numero", "Cliente", "Direccion", "Total", "Ruta"}, filas);
+    }
+
+    private void mostrarVehiculos() throws SQLException {
+        var vehiculos = controlador.listarVehiculos();
+        if (vehiculos.isEmpty()) {
+            System.out.println("No hay vehiculos registrados.");
+            return;
+        }
+
+        List<String[]> filas = new ArrayList<>();
+        for (Vehiculo vehiculo : vehiculos) {
+            String capacidad = vehiculo.capacidad() == null ? "-" : vehiculo.capacidad().toPlainString();
+            filas.add(new String[]{String.valueOf(vehiculo.idVehiculo()), vehiculo.placa(), vehiculo.modelo(),
+                    capacidad, vehiculo.estado().valorBd()});
+        }
+        TablaConsola.imprimir(new String[]{"Id", "Placa", "Modelo", "Capacidad", "Estado"}, filas);
+    }
+
+    private void mostrarConductores() throws SQLException {
+        var conductores = controlador.listarConductores();
+        if (conductores.isEmpty()) {
+            System.out.println("No hay conductores registrados.");
+            return;
+        }
+
+        List<String[]> filas = new ArrayList<>();
+        for (Conductor conductor : conductores) {
+            String estado = conductor.activo() ? "Activo" : "Inactivo";
+            filas.add(new String[]{String.valueOf(conductor.idConductor()), conductor.nombre(),
+                    conductor.numeroLicencia(), conductor.telefono(), estado});
+        }
+        TablaConsola.imprimir(new String[]{"Id", "Nombre", "Licencia", "Telefono", "Estado"}, filas);
+    }
+
+    private void mostrarRutas() throws SQLException {
+        var rutas = controlador.listarRutas();
+        if (rutas.isEmpty()) {
+            System.out.println("No hay rutas registradas.");
+            return;
+        }
+
+        List<String[]> filas = new ArrayList<>();
+        for (Ruta ruta : rutas) {
+            filas.add(new String[]{String.valueOf(ruta.idRuta()), ruta.nombreRuta(), ruta.estado().valorBd(),
+                    ruta.placa(), ruta.conductor(), formatoFecha(ruta.salidaEstimada())});
+        }
+        TablaConsola.imprimir(new String[]{"Id", "Ruta", "Estado", "Vehiculo", "Conductor", "Salida estimada"}, filas);
+    }
+
+    private void mostrarEntregas(int idRuta) throws SQLException {
+        var entregas = controlador.listarEntregas(idRuta);
+        if (entregas.isEmpty()) {
+            System.out.println("La ruta no tiene ventas asignadas.");
+            return;
+        }
+
+        List<String[]> filas = new ArrayList<>();
+        for (var entrega : entregas) {
+            String fecha = entrega.fechaEntrega() == null ? "Pendiente" : entrega.fechaEntrega().toString();
+            filas.add(new String[]{String.valueOf(entrega.ordenEntrega()), String.valueOf(entrega.idVenta()),
+                    entrega.numeroVenta(), entrega.direccionDestino(), fecha, entrega.recibidoPor(),
+                    entrega.observaciones()});
+        }
+        TablaConsola.imprimir(new String[]{"Orden", "Id venta", "Numero", "Destino", "Entregada",
+            "Recibio", "Observaciones"}, filas);
     }
 
     // 1 Listar, 2 Crear, 3 Cambiar estado, 4 Editar, 5 Eliminar.
     private void opcionVehiculos(String opcion) throws SQLException {
         switch (opcion) {
-            case "1" -> controlador.listarVehiculos().forEach(v -> System.out.printf(
-                    "#%d | %s | %s | capacidad: %s | %s%n", v.idVehiculo(), v.placa(), v.modelo(),
-                    v.capacidad(), v.estado().valorBd()));
+            case "1" -> mostrarVehiculos();
             case "2" -> {
                 controlador.crearVehiculo(preguntar("Placa"), preguntar("Modelo (opcional)"),
                         leerDecimalOpcional(preguntar("Capacidad (opcional)")));
@@ -133,9 +208,7 @@ public class MenuLogistica {
     // 1 Listar, 2 Crear, 3 Activar/desactivar, 4 Editar, 5 Eliminar.
     private void opcionConductores(String opcion) throws SQLException {
         switch (opcion) {
-            case "1" -> controlador.listarConductores().forEach(c -> System.out.printf(
-                    "#%d | %s | licencia: %s | tel: %s | %s%n", c.idConductor(), c.nombre(), c.numeroLicencia(),
-                    c.telefono(), c.activo() ? "Activo" : "Inactivo"));
+            case "1" -> mostrarConductores();
             case "2" -> {
                 controlador.crearConductor(preguntar("Nombre"), preguntar("Numero de licencia"),
                         preguntar("Telefono (opcional)"), preguntar("Correo (opcional)"));
@@ -165,21 +238,14 @@ public class MenuLogistica {
     // 1 Listar, 2 Crear, 3 Ver ventas, 4 Editar, 5 Cancelar.
     private void opcionRutas(String opcion) throws SQLException {
         switch (opcion) {
-            case "1" -> controlador.listarRutas().forEach(r -> System.out.printf(
-                    "#%d | %s | %s | vehiculo: %s | conductor: %s | salida estimada: %s%n", r.idRuta(),
-                    r.nombreRuta(), r.estado().valorBd(), r.placa() == null ? "-" : r.placa(),
-                    r.conductor() == null ? "-" : r.conductor(), r.salidaEstimada()));
+            case "1" -> mostrarRutas();
             case "2" -> {
                 controlador.crearRuta(preguntar("Nombre de la ruta"),
                         leerFechaOpcional(preguntar("Salida estimada aaaa-MM-dd HH:mm (opcional)")),
                         leerFechaOpcional(preguntar("Llegada estimada aaaa-MM-dd HH:mm (opcional)")));
                 System.out.println("Ruta creada en estado Planificada.");
             }
-            case "3" -> controlador.listarEntregas(leerEntero(preguntar("Id de la ruta"))).forEach(e ->
-                    System.out.printf("orden %s | venta #%d (%s) | destino: %s | entregada: %s | recibio: %s | obs: %s%n",
-                            e.ordenEntrega(), e.idVenta(), e.numeroVenta(), e.direccionDestino(),
-                            e.fechaEntrega() == null ? "pendiente" : e.fechaEntrega(), e.recibidoPor(),
-                            e.observaciones()));
+            case "3" -> mostrarEntregas(leerEntero(preguntar("Id de la ruta")));
             case "4" -> {
                 Ruta r = controlador.obtenerRuta(leerEntero(preguntar("Id de la ruta")));
                 controlador.actualizarRuta(r.idRuta(), conservar("Nombre de la ruta", r.nombreRuta()),

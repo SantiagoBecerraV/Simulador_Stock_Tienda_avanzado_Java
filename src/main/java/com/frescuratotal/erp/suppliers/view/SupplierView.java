@@ -1,8 +1,10 @@
 package com.frescuratotal.erp.suppliers.view;
 
+import com.frescuratotal.erp.common.TablaConsola;
 import com.frescuratotal.erp.suppliers.controller.SupplierController;
 import com.frescuratotal.erp.suppliers.model.Supplier;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -55,10 +57,15 @@ public class SupplierView {
         List<Supplier> suppliers = controller.listSuppliers();
         if (suppliers.isEmpty()) {
             System.out.println("No hay proveedores registrados aun");
+            return;
         }
+
+        List<String[]> filas = new ArrayList<>();
         for (Supplier supplier : suppliers) {
-            System.out.println(supplier);
+            filas.add(new String[]{String.valueOf(supplier.getId()), supplier.getName(), supplier.getNit(),
+                    supplier.getEmail(), supplier.isActive() ? "Activo" : "Inactivo"});
         }
+        TablaConsola.imprimir(new String[]{"Id", "Nombre", "NIT", "Correo", "Estado"}, filas);
     }
 
     private void addSupplier() throws SQLException {

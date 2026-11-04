@@ -1,5 +1,6 @@
 package com.frescuratotal.erp.sales.view;
 
+import com.frescuratotal.erp.common.TablaConsola;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
 import com.frescuratotal.erp.sales.controller.ControladorFacturacion;
@@ -106,9 +107,12 @@ public class MenuVentas {
             return;
         }
         System.out.println("Ventas registradas pendientes:");
+        List<String[]> filas = new ArrayList<>();
         for (VentaRegistrada v : ventas) {
-            System.out.printf("  #%d | %s | %s | $%s%n", v.idVenta(), v.numeroVenta(), v.cliente(), v.montoTotal());
+            filas.add(new String[]{String.valueOf(v.idVenta()), v.numeroVenta(), v.cliente(),
+                    "$" + v.montoTotal()});
         }
+        TablaConsola.imprimir(new String[]{"Id venta", "Numero", "Cliente", "Total"}, filas);
         controlador.pasarAPreparacion(convertirEntero(preguntar("Id de la venta a pasar a preparacion")));
         System.out.println("Venta en preparacion: ya aparece en el panel de Logistica.");
     }
@@ -132,25 +136,30 @@ public class MenuVentas {
             return;
         }
         System.out.println("Lotes disponibles (primero los que vencen antes):");
+        List<String[]> filas = new ArrayList<>();
         for (Lote l : lotes) {
             String descuento = l.tasaDescuento().signum() > 0
-                    ? " | descuento " + l.tasaDescuento().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
-                    : "";
-            System.out.printf("  #%d | %s | %s | vence %s | existencias %s | $%s | %s%s%n",
-                    l.idLote(), l.numeroLote(), l.producto(), l.fechaVencimiento(),
-                    l.cantidad(), l.precioVenta(), l.estado(), descuento);
+                    ? l.tasaDescuento().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
+                    : "-";
+            filas.add(new String[]{String.valueOf(l.idLote()), l.numeroLote(), l.producto(),
+                    String.valueOf(l.fechaVencimiento()), String.valueOf(l.cantidad()),
+                    "$" + l.precioVenta(), l.estado(), descuento});
         }
+        TablaConsola.imprimir(new String[]{"Id", "Numero de lote", "Producto", "Vence",
+            "Existencias", "Precio", "Estado", "Descuento"}, filas);
     }
 
     private void mostrarResumen(List<LineaPedido> pedido) {
         BigDecimal total = BigDecimal.ZERO;
         System.out.println("\nResumen del pedido:");
+        List<String[]> filas = new ArrayList<>();
         for (LineaPedido l : pedido) {
-            System.out.printf("  %s x %s | subtotal $%s | descuento $%s | impuesto $%s | total $%s%n",
-                    l.lote().producto(), l.cantidad(), l.subtotal(), l.montoDescuento(),
-                    l.montoImpuesto(), l.totalLinea());
+            filas.add(new String[]{l.lote().producto(), String.valueOf(l.cantidad()),
+                    "$" + l.subtotal(), "$" + l.montoDescuento(), "$" + l.montoImpuesto(),
+                    "$" + l.totalLinea()});
             total = total.add(l.totalLinea());
         }
+        TablaConsola.imprimir(new String[]{"Producto", "Cantidad", "Subtotal", "Descuento", "Impuesto", "Total"}, filas);
         System.out.println("TOTAL: $" + total);
     }
 

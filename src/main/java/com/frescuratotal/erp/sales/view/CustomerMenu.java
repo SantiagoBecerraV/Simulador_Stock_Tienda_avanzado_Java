@@ -3,9 +3,11 @@ package com.frescuratotal.erp.sales.view;
 import com.frescuratotal.erp.sales.controller.CustomerController;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
+import com.frescuratotal.erp.common.TablaConsola;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -131,56 +133,15 @@ public class CustomerMenu {
             return;
         }
 
-        String[] encabezados = {"Nombre", "Documento", "Tipo", "Telefono", "Registro"};
-        String[][] filas = new String[customers.size()][encabezados.length];
-        int[] anchos = new int[encabezados.length];
-
-        for (int i = 0; i < encabezados.length; i++) {
-            anchos[i] = encabezados[i].length();
-        }
-
+        List<String[]> filas = new ArrayList<>();
         DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        for (int i = 0; i < customers.size(); i++) {
-            Customer cliente = customers.get(i);
-            filas[i][0] = valor(cliente.name());
-            filas[i][1] = valor(cliente.document());
-            filas[i][2] = valor(cliente.typeName());
-            filas[i][3] = valor(cliente.phone());
-            filas[i][4] = cliente.registrationDate() == null
+        for (Customer cliente : customers) {
+            String registro = cliente.registrationDate() == null
                     ? "-"
                     : cliente.registrationDate().toLocalDateTime().format(formatoFecha);
-
-            for (int columna = 0; columna < encabezados.length; columna++) {
-                anchos[columna] = Math.max(anchos[columna], filas[i][columna].length());
-            }
+            filas.add(new String[]{cliente.name(), cliente.document(), cliente.typeName(), cliente.phone(), registro});
         }
-
-        printSeparator(anchos);
-        printRow(encabezados, anchos);
-        printSeparator(anchos);
-        for (String[] fila : filas) {
-            printRow(fila, anchos);
-        }
-        printSeparator(anchos);
-    }
-
-    private static String valor(String texto) {
-        return texto == null || texto.isBlank() ? "-" : texto;
-    }
-
-    private static void printRow(String[] valores, int[] anchos) {
-        System.out.print("| ");
-        for (int i = 0; i < valores.length; i++) {
-            System.out.printf("%-" + anchos[i] + "s | ", valores[i]);
-        }
-        System.out.println();
-    }
-
-    private static void printSeparator(int[] anchos) {
-        System.out.print("+");
-        for (int ancho : anchos) {
-            System.out.print("-".repeat(ancho + 2) + "+");
-        }
-        System.out.println();
+        TablaConsola.imprimir(
+                new String[]{"Nombre", "Documento", "Tipo", "Telefono", "Registro"}, filas);
     }
 }

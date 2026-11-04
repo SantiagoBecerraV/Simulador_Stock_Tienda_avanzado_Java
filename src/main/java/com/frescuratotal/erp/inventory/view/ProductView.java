@@ -2,8 +2,10 @@ package com.frescuratotal.erp.inventory.view;
 
 import com.frescuratotal.erp.inventory.controller.ProductController;
 import com.frescuratotal.erp.inventory.model.Product;
+import com.frescuratotal.erp.common.TablaConsola;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 public class ProductView {
@@ -49,10 +51,15 @@ public class ProductView {
         List<Product> products = controller.listProducts();
         if (products.isEmpty()) {
             System.out.println("No hay productos registrados aun...");
+            return;
         }
+
+        List<String[]> filas = new ArrayList<>();
         for (Product product : products) {
-            System.out.println(product);
+            filas.add(new String[]{String.valueOf(product.getId()), product.getName(), product.getUnit(),
+                    "$" + product.getBasePrice(), String.valueOf(product.getCategoryId())});
         }
+        TablaConsola.imprimir(new String[]{"Id", "Nombre", "Unidad", "Precio base", "Id categoria"}, filas);
     }
 
     private void addProduct() throws SQLException {

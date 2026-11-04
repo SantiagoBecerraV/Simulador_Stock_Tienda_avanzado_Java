@@ -1,11 +1,13 @@
 package com.frescuratotal.erp.inventory.view;
 
+import com.frescuratotal.erp.common.TablaConsola;
 import com.frescuratotal.erp.inventory.controller.LotController;
 import com.frescuratotal.erp.inventory.model.Lot;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 public class LotView {
@@ -76,10 +78,18 @@ public class LotView {
         List<Lot> lots = controller.listLots();
         if (lots.isEmpty()) {
             System.out.println("No hay lotes todavía.....");
+            return;
         }
+
+        List<String[]> filas = new ArrayList<>();
         for (Lot lot : lots) {
-            System.out.println(lot);
+            filas.add(new String[]{String.valueOf(lot.getId()), lot.getLotNumber(),
+                    String.valueOf(lot.getProductId()), String.valueOf(lot.getSupplierId()),
+                    String.valueOf(lot.getQuantity()), String.valueOf(lot.getExpirationDate()),
+                    lot.getStatus().toString()});
         }
+        TablaConsola.imprimir(new String[]{"Id", "Numero de lote", "Id producto", "Id proveedor",
+            "Existencias", "Vencimiento", "Estado"}, filas);
     }
 
     private void runExpirationCheck() throws SQLException {
