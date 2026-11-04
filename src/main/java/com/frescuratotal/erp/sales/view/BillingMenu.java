@@ -1,7 +1,7 @@
 package com.frescuratotal.erp.sales.view;
 
-import com.frescuratotal.erp.sales.controller.ControladorFacturacion;
-import com.frescuratotal.erp.sales.dao.FacturaDao;
+import com.frescuratotal.erp.sales.controller.BillingController;
+import com.frescuratotal.erp.sales.dao.InvoiceDao;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -10,34 +10,34 @@ import java.util.Scanner;
 
 /**
  * Menu de consola del modulo de Facturacion. Punto de entrada para el menu principal:
- * new MenuFacturacion(scanner, DatabaseConnection.getConnection()).ejecutar();
+ * new BillingMenu(scanner, DatabaseConnection.getConnection()).run();
  */
-public class MenuFacturacion {
+public class BillingMenu {
 
     // Carpeta (relativa a donde se ejecuta el programa) donde se guardan los PDF.
-    static final Path CARPETA_FACTURAS = Path.of("facturas");
+    static final Path INVOICE_DIRECTORY = Path.of("facturas");
 
-    private final Scanner entrada;
-    private final ControladorFacturacion controlador;
+    private final Scanner input;
+    private final BillingController controller;
 
-    public MenuFacturacion(Scanner entrada, Connection conexion) {
-        this.entrada = entrada;
-        this.controlador = new ControladorFacturacion(new FacturaDao(conexion));
+    public BillingMenu(Scanner input, Connection connection) {
+        this.input = input;
+        this.controller = new BillingController(new InvoiceDao(connection));
     }
 
-    public void ejecutar() {
+    public void run() {
         while (true) {
             System.out.println("\n--- Facturacion ---");
             System.out.println("1. Generar factura PDF de una venta");
             System.out.println("0. Volver");
-            String opcion = preguntar("Opcion");
-            if (opcion.equals("0")) {
+            String option = ask("Opcion");
+            if (option.equals("0")) {
                 return;
             }
             try {
-                if (opcion.equals("1")) {
-                    int idVenta = convertirEntero(preguntar("Id de la venta"));
-                    Path pdf = controlador.generarFactura(idVenta, CARPETA_FACTURAS);
+                if (option.equals("1")) {
+                    int saleId = parseInteger(ask("Id de la venta"));
+                    Path pdf = controller.generateInvoice(saleId, INVOICE_DIRECTORY);
                     System.out.println("Factura de demostracion generada: " + pdf.toAbsolutePath());
                 } else {
                     System.out.println("Opcion no valida.");
@@ -52,16 +52,16 @@ public class MenuFacturacion {
         }
     }
 
-    private static int convertirEntero(String texto) {
+    private static int parseInteger(String text) {
         try {
-            return Integer.parseInt(texto.trim());
+            return Integer.parseInt(text.trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("'" + texto + "' no es un numero valido.");
+            throw new IllegalArgumentException("'" + text + "' no es un numero valido.");
         }
     }
 
-    private String preguntar(String etiqueta) {
-        System.out.print(etiqueta + ": ");
-        return entrada.nextLine().trim();
+    private String ask(String label) {
+        System.out.print(label + ": ");
+        return input.nextLine().trim();
     }
 }

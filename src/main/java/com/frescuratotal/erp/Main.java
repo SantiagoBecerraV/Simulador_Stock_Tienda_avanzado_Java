@@ -8,9 +8,9 @@ import com.frescuratotal.erp.inventory.view.ProductView;
 import com.frescuratotal.erp.inventory.controller.LotController;
 import com.frescuratotal.erp.inventory.view.LotView;
 import com.frescuratotal.erp.sales.view.CustomerMenu;
-import com.frescuratotal.erp.sales.view.MenuFacturacion;
-import com.frescuratotal.erp.sales.view.MenuLogistica;
-import com.frescuratotal.erp.sales.view.MenuVentas;
+import com.frescuratotal.erp.sales.view.BillingMenu;
+import com.frescuratotal.erp.sales.view.LogisticsMenu;
+import com.frescuratotal.erp.sales.view.SalesMenu;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Scanner;
@@ -32,7 +32,7 @@ public class Main {
                 case 1 -> productView.show();
                 case 2 -> supplierView.show();
                 case 3 -> lotView.show();
-                case 4, 5, 6, 7 -> abrirModuloDeVentas(option, scanner);
+                case 4, 5, 6, 7 -> openSalesModule(option, scanner);
                 case 0 -> {
                     running = false;
                     System.out.println("Saliendo...\n");
@@ -58,14 +58,14 @@ public class Main {
     }
 
     // Los menus de ventas, facturacion, clientes y logistica comparten la misma conexion.
-    private static void abrirModuloDeVentas(int option, Scanner scanner) {
+    private static void openSalesModule(int option, Scanner scanner) {
         try {
-            Connection conexion = DatabaseConnection.getConnection();
+            Connection connection = DatabaseConnection.getConnection();
             switch (option) {
-                case 4 -> new MenuVentas(scanner, conexion).ejecutar();
-                case 5 -> new MenuFacturacion(scanner, conexion).ejecutar();
-                case 6 -> new CustomerMenu(scanner, conexion).run();
-                case 7 -> new MenuLogistica(scanner, conexion).ejecutar();
+                case 4 -> new SalesMenu(scanner, connection).run();
+                case 5 -> new BillingMenu(scanner, connection).run();
+                case 6 -> new CustomerMenu(scanner, connection).run();
+                case 7 -> new LogisticsMenu(scanner, connection).run();
             }
         } catch (SQLException e) {
             System.out.println("No se pudo conectar a la base de datos: " + e.getMessage());

@@ -10,17 +10,17 @@ public enum LotStatus {
     REJECTED(5, "Rechazado");
 
     private final int id;
-    private final String etiqueta;
+    private final String label;
 
-    LotStatus(int id, String etiqueta) {
+    LotStatus(int id, String label) {
         this.id = id;
-        this.etiqueta = etiqueta;
+        this.label = label;
     }
 
     // Texto en espanol que ve la persona usuaria.
     @Override
     public String toString() {
-        return etiqueta;
+        return label;
     }
 
     public int getId() {

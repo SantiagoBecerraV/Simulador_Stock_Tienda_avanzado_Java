@@ -3,7 +3,7 @@ package com.frescuratotal.erp.sales.view;
 import com.frescuratotal.erp.sales.controller.CustomerController;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
-import com.frescuratotal.erp.common.TablaConsola;
+import com.frescuratotal.erp.common.ConsoleTable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -18,11 +18,11 @@ import java.util.Scanner;
  */
 public class CustomerMenu {
 
-    private final Scanner in;
+    private final Scanner input;
     private final CustomerController controller;
 
-    public CustomerMenu(Scanner in, Connection connection) {
-        this.in = in;
+    public CustomerMenu(Scanner input, Connection connection) {
+        this.input = input;
         this.controller = new CustomerController(new CustomerDao(connection));
     }
 
@@ -113,7 +113,7 @@ public class CustomerMenu {
 
     private String ask(String label) {
         System.out.print(label + ": ");
-        return in.nextLine().trim();
+        return input.nextLine().trim();
     }
 
     private String askKeep(String label, String current) {
@@ -133,15 +133,15 @@ public class CustomerMenu {
             return;
         }
 
-        List<String[]> filas = new ArrayList<>();
-        DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        for (Customer cliente : customers) {
-            String registro = cliente.registrationDate() == null
+        List<String[]> rows = new ArrayList<>();
+        DateTimeFormatter formatDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (Customer customer : customers) {
+            String registro = customer.registrationDate() == null
                     ? "-"
-                    : cliente.registrationDate().toLocalDateTime().format(formatoFecha);
-            filas.add(new String[]{cliente.name(), cliente.document(), cliente.typeName(), cliente.phone(), registro});
+                    : customer.registrationDate().toLocalDateTime().format(formatDate);
+            rows.add(new String[]{customer.name(), customer.document(), customer.typeName(), customer.phone(), registro});
         }
-        TablaConsola.imprimir(
-                new String[]{"Nombre", "Documento", "Tipo", "Telefono", "Registro"}, filas);
+        ConsoleTable.printTable(
+                new String[]{"Nombre", "Documento", "Tipo", "Telefono", "Registro"}, rows);
     }
 }

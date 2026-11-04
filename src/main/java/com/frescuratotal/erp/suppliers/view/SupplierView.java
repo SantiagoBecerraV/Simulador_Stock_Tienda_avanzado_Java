@@ -1,6 +1,6 @@
 package com.frescuratotal.erp.suppliers.view;
 
-import com.frescuratotal.erp.common.TablaConsola;
+import com.frescuratotal.erp.common.ConsoleTable;
 import com.frescuratotal.erp.suppliers.controller.SupplierController;
 import com.frescuratotal.erp.suppliers.model.Supplier;
 import java.sql.SQLException;
@@ -60,12 +60,12 @@ public class SupplierView {
             return;
         }
 
-        List<String[]> filas = new ArrayList<>();
+        List<String[]> rows = new ArrayList<>();
         for (Supplier supplier : suppliers) {
-            filas.add(new String[]{String.valueOf(supplier.getId()), supplier.getName(), supplier.getNit(),
+            rows.add(new String[]{String.valueOf(supplier.getId()), supplier.getName(), supplier.getNit(),
                     supplier.getEmail(), supplier.isActive() ? "Activo" : "Inactivo"});
         }
-        TablaConsola.imprimir(new String[]{"Id", "Nombre", "NIT", "Correo", "Estado"}, filas);
+        ConsoleTable.printTable(new String[]{"Id", "Nombre", "NIT", "Correo", "Estado"}, rows);
     }
 
     private void addSupplier() throws SQLException {

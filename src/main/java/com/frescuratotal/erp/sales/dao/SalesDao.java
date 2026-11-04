@@ -1,9 +1,9 @@
 package com.frescuratotal.erp.sales.dao;
 
-import com.frescuratotal.erp.sales.model.EstadoVenta;
-import com.frescuratotal.erp.sales.model.LineaPedido;
-import com.frescuratotal.erp.sales.model.Lote;
-import com.frescuratotal.erp.sales.model.VentaRegistrada;
+import com.frescuratotal.erp.sales.model.SaleStatus;
+import com.frescuratotal.erp.sales.model.OrderLine;
+import com.frescuratotal.erp.sales.model.SalesLot;
+import com.frescuratotal.erp.sales.model.RegisteredSale;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VentasDao {
+public class SalesDao {
 
     // FEFO: los lotes que vencen primero salen primero. Solo se ofrecen lotes con existencias,
     // estado vendible y sin vencer. El descuento es el mayor de las promociones activas y vigentes
@@ -39,18 +39,18 @@ public class VentasDao {
             + "ORDER BY l.fecha_vencimiento ASC, l.id_lote ASC";
 
     // La conexion viene del paquete comun compartido; este DAO no abre la suya.
-    private final Connection conexion;
+    private final Connection connection;
 
-    public VentasDao(Connection conexion) {
-        this.conexion = conexion;
+    public SalesDao(Connection connection) {
+        this.connection = connection;
     }
 
-    public List<Lote> listarLotesVendibles() throws SQLException {
-        List<Lote> lotes = new ArrayList<>();
-        try (PreparedStatement ps = conexion.prepareStatement(LOTES_VENDIBLES);
+    public List<SalesLot> listSellableLots() throws SQLException {
+        List<SalesLot> lots = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(LOTES_VENDIBLES);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                lotes.add(new Lote(
+                lots.add(new SalesLot(
                         rs.getInt("id_lote"),
                         rs.getString("numero_lote"),
                         rs.getString("producto"),
@@ -61,73 +61,73 @@ public class VentasDao {
                         rs.getBigDecimal("tasa_descuento")));
             }
         }
-        return lotes;
+        return lots;
     }
 
-    public List<VentaRegistrada> listarVentasRegistradas() throws SQLException {
+    public List<RegisteredSale> listRegisteredSales() throws SQLException {
         String sql = "SELECT v.id_venta, v.numero_venta, c.nombre, v.monto_total FROM ventas v "
                 + "JOIN clientes c ON c.id_cliente = v.id_cliente "
                 + "JOIN estados_venta e ON e.id_estado = v.id_estado "
                 + "WHERE e.nombre = 'Registrada' ORDER BY v.fecha_venta, v.id_venta";
-        List<VentaRegistrada> ventas = new ArrayList<>();
-        try (PreparedStatement ps = conexion.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        List<RegisteredSale> sales = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                ventas.add(new VentaRegistrada(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getBigDecimal(4)));
+                sales.add(new RegisteredSale(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getBigDecimal(4)));
             }
         }
-        return ventas;
+        return sales;
     }
 
     // Registrada -> En Preparacion. Solo cambia si la venta sigue Registrada (no pisa otros estados).
-    public boolean pasarAPreparacion(int idVenta) throws SQLException {
+    public boolean moveSaleToPreparation(int saleId) throws SQLException {
         String sql = "UPDATE ventas SET id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = ?) "
                 + "WHERE id_venta = ? AND id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = 'Registrada')";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setString(1, EstadoVenta.IN_PREPARATION.valorBd());
-            ps.setInt(2, idVenta);
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, SaleStatus.IN_PREPARATION.databaseValue());
+            ps.setInt(2, saleId);
             return ps.executeUpdate() == 1;
         }
     }
 
     // Venta + detalles + descuento de stock en UNA transaccion: si algo falla, rollback de todo.
     // Devuelve el id de la venta creada.
-    public int registrarVenta(int idCliente, List<LineaPedido> lineas) throws SQLException {
-        boolean autoCommitOriginal = conexion.getAutoCommit();
-        conexion.setAutoCommit(false);
+    public int registerSale(int customerId, List<OrderLine> lines) throws SQLException {
+        boolean autoCommitOriginal = connection.getAutoCommit();
+        connection.setAutoCommit(false);
         try {
-            int idVenta = insertarVenta(idCliente, lineas);
-            for (LineaPedido linea : lineas) {
-                descontarStock(linea);
-                insertarDetalle(idVenta, linea);
+            int saleId = insertSale(customerId, lines);
+            for (OrderLine line : lines) {
+                subtractStock(line);
+                insertSaleDetail(saleId, line);
             }
-            conexion.commit();
-            return idVenta;
+            connection.commit();
+            return saleId;
         } catch (SQLException | RuntimeException e) {
-            conexion.rollback();
+            connection.rollback();
             throw e;
         } finally {
-            conexion.setAutoCommit(autoCommitOriginal);
+            connection.setAutoCommit(autoCommitOriginal);
         }
     }
 
-    private int insertarVenta(int idCliente, List<LineaPedido> lineas) throws SQLException {
+    private int insertSale(int customerId, List<OrderLine> lines) throws SQLException {
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal descuento = BigDecimal.ZERO;
         BigDecimal impuesto = BigDecimal.ZERO;
         BigDecimal total = BigDecimal.ZERO;
-        for (LineaPedido l : lineas) {
+        for (OrderLine l : lines) {
             subtotal = subtotal.add(l.subtotal());
-            descuento = descuento.add(l.montoDescuento());
-            impuesto = impuesto.add(l.montoImpuesto());
-            total = total.add(l.totalLinea());
+            descuento = descuento.add(l.discountAmount());
+            impuesto = impuesto.add(l.taxAmount());
+            total = total.add(l.lineTotal());
         }
-        String numeroVenta = "V-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        String saleNumber = "V-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
         String sql = "INSERT INTO ventas (numero_venta, id_cliente, subtotal, total_descuento, total_impuesto, "
                 + "monto_total, id_estado) VALUES (?, ?, ?, ?, ?, ?, "
                 + "(SELECT id_estado FROM estados_venta WHERE nombre = 'Registrada'))";
-        try (PreparedStatement ps = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, numeroVenta);
-            ps.setInt(2, idCliente);
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, saleNumber);
+            ps.setInt(2, customerId);
             ps.setBigDecimal(3, subtotal);
             ps.setBigDecimal(4, descuento);
             ps.setBigDecimal(5, impuesto);
@@ -142,36 +142,36 @@ public class VentasDao {
 
     // Verificacion y descuento en un solo UPDATE: la fila queda bloqueada hasta el commit y
     // solo se actualiza si todavia hay existencias y el lote sigue siendo vendible.
-    private void descontarStock(LineaPedido linea) throws SQLException {
+    private void subtractStock(OrderLine line) throws SQLException {
         String sql = "UPDATE lotes_inventario SET cantidad = cantidad - ? "
                 + "WHERE id_lote = ? AND cantidad >= ? AND fecha_vencimiento >= CURDATE() "
                 + "AND id_estado IN (SELECT id_estado FROM estados_lote WHERE nombre IN ('Disponible', 'Proximo a Vencer'))";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setBigDecimal(1, linea.cantidad());
-            ps.setInt(2, linea.lote().idLote());
-            ps.setBigDecimal(3, linea.cantidad());
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setBigDecimal(1, line.quantity());
+            ps.setInt(2, line.lot().lotId());
+            ps.setBigDecimal(3, line.quantity());
             if (ps.executeUpdate() == 0) {
                 throw new IllegalArgumentException("Ya no hay existencias suficientes del lote "
-                        + linea.lote().numeroLote() + ". La venta no se registro.");
+                        + line.lot().lotNumber() + ". La venta no se registro.");
             }
         }
     }
 
-    private void insertarDetalle(int idVenta, LineaPedido linea) throws SQLException {
+    private void insertSaleDetail(int saleId, OrderLine line) throws SQLException {
         String sql = "INSERT INTO detalles_venta (id_venta, id_lote, cantidad_vendida, precio_unitario, "
                 + "descuento_aplicado, monto_descuento, tasa_impuesto, monto_impuesto, subtotal, total_linea) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setInt(1, idVenta);
-            ps.setInt(2, linea.lote().idLote());
-            ps.setBigDecimal(3, linea.cantidad());
-            ps.setBigDecimal(4, linea.lote().precioVenta());
-            ps.setBigDecimal(5, linea.lote().tasaDescuento());
-            ps.setBigDecimal(6, linea.montoDescuento());
-            ps.setBigDecimal(7, linea.tasaImpuesto());
-            ps.setBigDecimal(8, linea.montoImpuesto());
-            ps.setBigDecimal(9, linea.subtotal());
-            ps.setBigDecimal(10, linea.totalLinea());
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, saleId);
+            ps.setInt(2, line.lot().lotId());
+            ps.setBigDecimal(3, line.quantity());
+            ps.setBigDecimal(4, line.lot().salePrice());
+            ps.setBigDecimal(5, line.lot().discountRate());
+            ps.setBigDecimal(6, line.discountAmount());
+            ps.setBigDecimal(7, line.taxRate());
+            ps.setBigDecimal(8, line.taxAmount());
+            ps.setBigDecimal(9, line.subtotal());
+            ps.setBigDecimal(10, line.lineTotal());
             ps.executeUpdate();
         }
     }

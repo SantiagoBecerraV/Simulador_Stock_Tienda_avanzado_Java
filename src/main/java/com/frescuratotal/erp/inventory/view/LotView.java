@@ -1,6 +1,6 @@
 package com.frescuratotal.erp.inventory.view;
 
-import com.frescuratotal.erp.common.TablaConsola;
+import com.frescuratotal.erp.common.ConsoleTable;
 import com.frescuratotal.erp.inventory.controller.LotController;
 import com.frescuratotal.erp.inventory.model.Lot;
 import java.math.BigDecimal;
@@ -81,15 +81,15 @@ public class LotView {
             return;
         }
 
-        List<String[]> filas = new ArrayList<>();
+        List<String[]> rows = new ArrayList<>();
         for (Lot lot : lots) {
-            filas.add(new String[]{String.valueOf(lot.getId()), lot.getLotNumber(),
+            rows.add(new String[]{String.valueOf(lot.getId()), lot.getLotNumber(),
                     String.valueOf(lot.getProductId()), String.valueOf(lot.getSupplierId()),
                     String.valueOf(lot.getQuantity()), String.valueOf(lot.getExpirationDate()),
                     lot.getStatus().toString()});
         }
-        TablaConsola.imprimir(new String[]{"Id", "Numero de lote", "Id producto", "Id proveedor",
-            "Existencias", "Vencimiento", "Estado"}, filas);
+        ConsoleTable.printTable(new String[]{"Id", "Numero de lote", "Id producto", "Id proveedor",
+            "Existencias", "Vencimiento", "Estado"}, rows);
     }
 
     private void runExpirationCheck() throws SQLException {

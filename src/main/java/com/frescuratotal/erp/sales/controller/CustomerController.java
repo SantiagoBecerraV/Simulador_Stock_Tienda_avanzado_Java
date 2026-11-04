@@ -38,7 +38,7 @@ public class CustomerController {
         try {
             dao.insert(clean(c));
         } catch (SQLException e) {
-            if (esDuplicado(e)) {
+            if (isDuplicate(e)) {
                 throw new IllegalArgumentException("Ya existe un cliente con el documento '" + c.document() + "'.");
             }
             throw e;
@@ -52,7 +52,7 @@ public class CustomerController {
                 throw new IllegalArgumentException("No existe un cliente con id " + c.customerId() + ".");
             }
         } catch (SQLException e) {
-            if (esDuplicado(e)) {
+            if (isDuplicate(e)) {
                 throw new IllegalArgumentException("Ya existe un cliente con el documento '" + c.document() + "'.");
             }
             throw e;
@@ -88,7 +88,7 @@ public class CustomerController {
     }
 
     // true si MySQL rechazo el dato por repetir un valor unico (el documento).
-    private static boolean esDuplicado(SQLException e) {
+    private static boolean isDuplicate(SQLException e) {
         return e.getErrorCode() == MYSQL_DUPLICATE_ENTRY;
     }
 

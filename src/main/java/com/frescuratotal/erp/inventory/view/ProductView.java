@@ -2,7 +2,7 @@ package com.frescuratotal.erp.inventory.view;
 
 import com.frescuratotal.erp.inventory.controller.ProductController;
 import com.frescuratotal.erp.inventory.model.Product;
-import com.frescuratotal.erp.common.TablaConsola;
+import com.frescuratotal.erp.common.ConsoleTable;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -54,12 +54,12 @@ public class ProductView {
             return;
         }
 
-        List<String[]> filas = new ArrayList<>();
+        List<String[]> rows = new ArrayList<>();
         for (Product product : products) {
-            filas.add(new String[]{String.valueOf(product.getId()), product.getName(), product.getUnit(),
+            rows.add(new String[]{String.valueOf(product.getId()), product.getName(), product.getUnit(),
                     "$" + product.getBasePrice(), String.valueOf(product.getCategoryId())});
         }
-        TablaConsola.imprimir(new String[]{"Id", "Nombre", "Unidad", "Precio base", "Id categoria"}, filas);
+        ConsoleTable.printTable(new String[]{"Id", "Nombre", "Unidad", "Precio base", "Id categoria"}, rows);
     }
 
     private void addProduct() throws SQLException {
