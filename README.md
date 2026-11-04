@@ -55,7 +55,7 @@ Para configurarla en su MySQL local, siga estos pasos:
 La conexión se administra de forma centralizada en la clase:
 [`DatabaseConnection.java`](src/main/java/com/frescuratotal/erp/common/DatabaseConnection.java)
 
-Abra el archivo y ajuste las constantes `URL`, `USER` y `PASSWORD` con los datos de su entorno local (por ejemplo, si su puerto es 3306 o 3308):
+Abra el archivo y ajuste las constantes `URL`, `USER` y `PASSWORD` con los datos de su entorno local (por ejemplo, si su puerto es 3306, 3307 o 3308):
 
 ```java
 package com.frescuratotal.erp.common;
@@ -74,6 +74,13 @@ public class DatabaseConnection {
     // ...
 }
 ```
+
+### 3. Documentación y recursos de apoyo
+
+En el directorio **`docs/`** se encuentran los documentos y recursos complementarios del proyecto:
+* **`docs/database.sql`:** Script SQL con la definición del esquema DDL y la población inicial de datos DML.
+* **`docs/erp_frescura_total.png`:** Diagrama del modelo entidad-relación (DER) de la base de datos.
+* **`docs/guia_exposicion_proyecto.pdf`:** Guía detallada para la sustentación y exposición del proyecto.
 
 ---
 
@@ -124,21 +131,22 @@ El sistema está organizado bajo una arquitectura **MVC por componentes funciona
 
 ```text
 src/main/java/com/frescuratotal/erp/
-├── common/                  # Infraestructura común y conexión a base de datos
+├── common/                  # Infraestructura común, tablas de consola y conexión a base de datos
+│   ├── ConsoleTable.java
 │   └── DatabaseConnection.java
-├── inventory/               # Gestión de productos, lotes y trazabilidad
+├── inventory/               # Gestión de productos, lotes, calidad y trazabilidad
 │   ├── controller/          # ProductController, LotController
-│   ├── model/               # Product, Lot, ProductDao, LotDao
+│   ├── model/               # Product, Lot, LotStatus, ProductDao, LotDao, QualityDao, TraceabilityDao
 │   └── view/                # ProductView, LotView
-├── suppliers/               # Gestión de proveedores
+├── suppliers/               # Gestión de proveedores y catálogo de compras
 │   ├── controller/          # SupplierController
 │   ├── model/               # Supplier, SupplierDao
 │   └── view/                # SupplierView
-├── sales/                   # Clientes, ventas, facturación y logística
-│   ├── controller/          # ControladorVentas, ControladorFacturacion, ControladorLogistica, CustomerController
-│   ├── dao/                 # VentasDao, FacturaDao, LogisticaDao, CustomerDao
-│   ├── model/               # Customer, Factura, Lote, LineaPedido, Ruta, Vehiculo, Conductor
-│   └── view/                # MenuVentas, MenuFacturacion, FacturaPdf, MenuLogistica, CustomerMenu
+├── sales/                   # Clientes, ventas, facturación y logística de entrega
+│   ├── controller/          # SalesController, BillingController, LogisticsController, CustomerController
+│   ├── dao/                 # SalesDao, InvoiceDao, LogisticsDao, CustomerDao
+│   ├── model/               # Customer, Driver, Invoice, OrderLine, RegisteredSale, Route, RouteDelivery, RouteStatus, SaleInPreparation, SalesLot, SaleStatus, Vehicle, VehicleStatus
+│   └── view/                # SalesMenu, BillingMenu, InvoicePdf, LogisticsMenu, CustomerMenu
 └── Main.java                # Punto de entrada de la aplicación y menú principal
 ```
 
@@ -146,12 +154,12 @@ src/main/java/com/frescuratotal/erp/
 
 | Módulo | Controladores | Acceso a Datos (DAO) | Modelos Principales | Vistas / Salidas |
 | :--- | :--- | :--- | :--- | :--- |
-| **Productos e Inventario** | `ProductController`, `LotController` | `ProductDao`, `LotDao` | `Product`, `Lot` | `ProductView`, `LotView` |
+| **Productos e Inventario** | `ProductController`, `LotController` | `ProductDao`, `LotDao`, `QualityDao`, `TraceabilityDao` | `Product`, `Lot`, `LotStatus` | `ProductView`, `LotView` |
 | **Proveedores** | `SupplierController` | `SupplierDao` | `Supplier` | `SupplierView` |
 | **Clientes** | `CustomerController` | `CustomerDao` | `Customer` | `CustomerMenu` |
-| **Ventas** | `ControladorVentas` | `VentasDao` | `Lote`, `LineaPedido`, `VentaRegistrada` | `MenuVentas` |
-| **Facturación** | `ControladorFacturacion` | `FacturaDao` | `Factura` | `MenuFacturacion`, `FacturaPdf` |
-| **Logística** | `ControladorLogistica` | `LogisticaDao` | `Vehiculo`, `Conductor`, `Ruta`, `EntregaRuta` | `MenuLogistica` |
+| **Ventas** | `SalesController` | `SalesDao` | `SalesLot`, `OrderLine`, `RegisteredSale` | `SalesMenu` |
+| **Facturación** | `BillingController` | `InvoiceDao` | `Invoice` | `BillingMenu`, `InvoicePdf` |
+| **Logística** | `LogisticsController` | `LogisticsDao` | `Vehicle`, `Driver`, `Route`, `RouteDelivery` | `LogisticsMenu` |
 
 ### Flujo del negocio:
 Los módulos no se acoplan directamente entre sí, sino que colaboran mediante los estados del pedido en la base de datos:
@@ -167,22 +175,27 @@ Los módulos no se acoplan directamente entre sí, sino que colaboran mediante l
 Para mantener el código ordenado, mantenible y fácil de entender, aplicamos los siguientes principios y patrones:
 
 ### 1. Patrón DAO (Data Access Object)
-Reunimos todas las consultas SQL y el manejo de JDBC en clases especializadas como `VentasDao`, `FacturaDao`, `CustomerDao`, `LogisticaDao`, `ProductDao`, `LotDao` y `SupplierDao`. De esta manera, los controladores y las vistas nunca escriben ni conocen sentencias SQL, sino que únicamente reciben y manipulan objetos del dominio. Si el día de mañana se cambia la estructura de una tabla o se optimiza un índice, solo debemos modificar el archivo DAO correspondiente sin alterar la lógica de negocio ni la interfaz de usuario.
+Reunimos todas las consultas SQL y el manejo de JDBC en clases especializadas como `SalesDao`, `InvoiceDao`, `CustomerDao`, `LogisticsDao`, `ProductDao`, `LotDao`, `QualityDao`, `TraceabilityDao` y `SupplierDao`. De esta manera, los controladores y las vistas nunca escriben ni conocen sentencias SQL, sino que únicamente reciben y manipulan objetos del dominio. Si el día de mañana se cambia la estructura de una tabla o se optimiza un índice, solo debemos modificar el archivo DAO correspondiente sin alterar la lógica de negocio ni la interfaz de usuario.
 
-### 2. Patrón Singleton
-Al inicio pensamos en abrir una conexión por operación, pero nos dimos cuenta de que no solo saturaba el servidor MySQL innecesariamente en una aplicación monousuario, sino que además nos impedía coordinar transacciones seguras con confirmaciones y cancelaciones. Por esa razón decidimos implementar el patrón Singleton en la clase `DatabaseConnection` (`com.frescuratotal.erp.common`), protegiendo su constructor como privado y ofreciendo un único punto de acceso global mediante el método estático `getConnection()`. Así garantizamos una única conexión viva durante toda la ejecución de la aplicación, compartida de forma limpia entre los distintos módulos.
+### 2. Patrón Singleton y Gestión de Recursos
+Al inicio pensamos en abrir una conexión por operación, pero nos dimos cuenta de que no solo saturaba el servidor MySQL innecesariamente en una aplicación monousuario, sino que además nos impedía coordinar transacciones seguras con confirmaciones y cancelaciones. Por esa razón decidimos implementar el patrón Singleton en la clase `DatabaseConnection` (`com.frescuratotal.erp.common`), protegiendo su constructor como privado y ofreciendo un único punto de acceso global mediante el método estático sincronizado `getConnection()`. Adicionalmente, se incluye el método `close()` y un `ShutdownHook` en `Main` para asegurar el cierre ordenado de la conexión al terminar la aplicación.
 
 ### 3. Principio de Responsabilidad Única (SRP)
-Al momento de diseñar el módulo de facturación, decidimos no recargar una sola clase con todo el proceso. Preferimos repartir el trabajo en componentes con una única tarea bien definida: `FacturaPdf` se encarga exclusivamente de maquetar el documento visual y generar la imagen del código QR con OpenPDF y ZXing; `FacturaDao` se limita a consultar y registrar los datos de la factura en MySQL; y `ControladorFacturacion` orquesta el flujo de negocio sin meterse en detalles de diseño visual ni en código SQL. Con esta separación, si queremos cambiar los estilos, colores o fuentes del PDF, lo hacemos directamente en `FacturaPdf` con la total tranquilidad de que no afectaremos el cálculo de totales ni la persistencia de las ventas.
+Al momento de diseñar el módulo de facturación, decidimos no recargar una sola clase con todo el proceso. Preferimos repartir el trabajo en componentes con una única tarea bien definida: `InvoicePdf` se encarga exclusivamente de maquetar el documento visual y generar la imagen del código QR con OpenPDF y ZXing; `InvoiceDao` se limita a consultar y registrar los datos de la factura en MySQL; y `BillingController` orquesta el flujo de negocio sin meterse en detalles de diseño visual ni en código SQL. Con esta separación, si queremos cambiar los estilos, colores o fuentes del PDF, lo hacemos directamente en `InvoicePdf` con la total tranquilidad de que no afectaremos el cálculo de totales ni la persistencia de las ventas.
 
 ### 4. Inversión de Dependencias y Manejo Transaccional
-En lugar de que cada DAO o controlador cree su propia conexión de forma rígida, diseñamos las clases para que reciban la conexión activa mediante sus constructores (por ejemplo, `new VentasDao(conexion)` o `new LogisticaDao(conexion)`). Esta decisión desacopló las clases del origen de datos y nos permitió manejar transacciones atómicas en operaciones compuestas: al registrar una venta, insertamos el encabezado, registramos el detalle y descontamos las existencias del lote bajo una misma unidad de trabajo con `commit`, garantizando que ante cualquier error inesperado se ejecute un `rollback` automático y la base de datos nunca quede en un estado inconsistente.
+En lugar de que cada DAO o controlador cree su propia conexión de forma rígida, diseñamos las clases para que reciban la conexión activa mediante sus constructores (por ejemplo, `new SalesDao(connection)` o `new LogisticsDao(connection)`). Esta decisión desacopló las clases del origen de datos y nos permitió manejar transacciones atómicas en operaciones compuestas: al registrar una venta, insertamos el encabezado, registramos el detalle y descontamos las existencias del lote bajo una misma unidad de trabajo con `commit`, garantizando que ante cualquier error inesperado se ejecute un `rollback` automático y la base de datos nunca quede en un estado inconsistente.
+
+### 5. Programación Funcional y Streams (Java 17)
+Se aprovechan las características modernas de Java para escribir código más conciso, declarativo y legible:
+* **Stream API:** Búsqueda funcional en enums (`Arrays.stream(values()).filter(...).findFirst()`) en `LotStatus`, `RouteStatus` y `VehicleStatus`; cálculo de acumulados de venta (subtotales, impuestos y totales) mediante `.map(...).reduce(...)` en `SalesDao`; y formateo dinámico de tablas en `ConsoleTable` usando `IntStream`.
+* **Lambdas y Referencias a Métodos:** Navegación por menú desacoplada mediante mapas de acciones funcionales (`Map<String, MenuAction>` y `Map<Integer, Runnable>`) en `Main` y en las vistas, además del uso de interfaces funcionales para operaciones transaccionales (`SqlLineAction` en `SalesDao` con `allMatch`).
 
 ---
 
 ## Nota del equipo
 
-* **Credenciales de base de datos:** Las credenciales que figuran en el código de ejemplo (`Campus2026` o `su_contrasena` en el puerto `3306` o `3308`) son referencias utilizadas durante las pruebas locales del equipo. Cada usuario debe verificar y ajustar su usuario, contraseña y puerto según su propia instalación local de MySQL.
+* **Credenciales de base de datos:** Las credenciales que figuran en el código de ejemplo (`Campus2026` o `su_contrasena` en los puertos `3306`, `3307` o `3308`) son referencias utilizadas durante las pruebas locales del equipo. Cada usuario debe verificar y ajustar su usuario, contraseña y puerto según su propia instalación local de MySQL.
 * **Facturación electrónica simulada:** Los valores de CUFE y el código QR generados en los archivos PDF son simulaciones creadas con fines estrictamente académicos y demostrativos; no representan documentos fiscales oficiales ante la DIAN.
 * **Generación automática de carpetas:** No es necesario crear la carpeta `facturas/` manualmente antes de iniciar el programa; la aplicación detecta si el directorio existe y lo crea de forma automática en la raíz del proyecto cuando se genera la primera factura.
-* **Tasa de impuesto (IVA):** Para facilitar las pruebas de demostración, el sistema utiliza una tasa inicial de 0 en `ControladorVentas.TASA_IMPUESTO`. Si se desea probar con un porcentaje específico de IVA, puede pasarse como propiedad de ejecución (por ejemplo `-Derp.tasaImpuesto=0.10`).
+* **Tasa de impuesto (IVA):** Para facilitar las pruebas de demostración, el sistema utiliza una tasa inicial de 0 en `SalesController.TAX_RATE`. Si se desea probar con un porcentaje específico de IVA, puede pasarse como propiedad de ejecución (por ejemplo `-Derp.tasaImpuesto=0.10`).
