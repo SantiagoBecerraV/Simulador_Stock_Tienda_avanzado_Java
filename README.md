@@ -8,7 +8,7 @@ El ERP para la Bodega de Alimentos "Frescura Total" es un sistema de consola des
 
 ## Autores
 
-* **Santiago Becerra**
+* **Santiago Becerra V**
 * **Cristian Solano**
 
 ---
