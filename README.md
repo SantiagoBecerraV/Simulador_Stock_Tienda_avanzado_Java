@@ -80,7 +80,7 @@ public class DatabaseConnection {
 En el directorio **`docs/`** se encuentran los documentos y recursos complementarios del proyecto:
 * **`docs/database.sql`:** Script SQL con la definición del esquema DDL y la población inicial de datos DML.
 * **`docs/erp_frescura_total.png`:** Diagrama del modelo entidad-relación (DER) de la base de datos.
-* **`docs/guia_exposicion_proyecto.pdf`:** Guía detallada para la sustentación y exposición del proyecto.
+* **`docs/diagrama_uml_clases.png`:** Diagrama UML de clases que ilustra la arquitectura orientada a objetos, relaciones entre entidades, controladores, DAOs y vistas.
 
 ---
 
