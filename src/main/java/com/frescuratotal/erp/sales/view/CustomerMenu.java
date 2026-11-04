@@ -27,6 +27,12 @@ public class CustomerMenu {
     }
 
     public void run() {
+        Map<String, MenuAction> actions = Map.of(
+                "1", () -> printCustomers(controller.list()),
+                "2", () -> print(controller.get(askId())),
+                "3", this::create,
+                "4", this::update,
+                "5", this::delete);
         while (true) {
             System.out.println("\n--- Clientes ---");
             System.out.println("1. Listar");
@@ -40,14 +46,7 @@ public class CustomerMenu {
                 return;
             }
             try {
-                switch (option) {
-                    case "1" -> printCustomers(controller.list());
-                    case "2" -> print(controller.get(askId()));
-                    case "3" -> create();
-                    case "4" -> update();
-                    case "5" -> delete();
-                    default -> System.out.println("Opcion no valida.");
-                }
+                actions.getOrDefault(option, () -> System.out.println("Opcion no valida.")).run();
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
             } catch (SQLException e) {
@@ -133,15 +132,22 @@ public class CustomerMenu {
             return;
         }
 
-        List<String[]> rows = new ArrayList<>();
         DateTimeFormatter formatDate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        for (Customer customer : customers) {
-            String registro = customer.registrationDate() == null
+        List<String[]> rows = customers.stream()
+                .map(customer -> {
+                    String registrationDate = customer.registrationDate() == null
                     ? "-"
                     : customer.registrationDate().toLocalDateTime().format(formatDate);
-            rows.add(new String[]{customer.name(), customer.document(), customer.typeName(), customer.phone(), registro});
-        }
+                    return new String[]{customer.name(), customer.document(), customer.typeName(),
+                        customer.phone(), registrationDate};
+                })
+                .toList();
         ConsoleTable.printTable(
                 new String[]{"Nombre", "Documento", "Tipo", "Telefono", "Registro"}, rows);
+    }
+
+    @FunctionalInterface
+    private interface MenuAction {
+        void run() throws SQLException;
     }
 }

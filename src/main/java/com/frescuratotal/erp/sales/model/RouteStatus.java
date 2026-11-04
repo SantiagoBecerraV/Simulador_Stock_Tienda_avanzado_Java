@@ -18,11 +18,9 @@ public enum RouteStatus {
     }
 
     public static RouteStatus fromDatabaseValue(String value) {
-        for (RouteStatus status : values()) {
-            if (status.databaseValue.equals(value)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Estado de ruta desconocido: " + value);
+        return java.util.Arrays.stream(values())
+                .filter(status -> status.databaseValue.equals(value))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Estado de ruta desconocido: " + value));
     }
 }

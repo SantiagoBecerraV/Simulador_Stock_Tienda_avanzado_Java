@@ -61,6 +61,7 @@ public class InvoiceDao {
                 if (!rs.next()) {
                     return Optional.empty();
                 }
+                int customerId = rs.getInt("id_cliente");
                 return Optional.of(new Invoice(
                         rs.getInt("id_factura"),
                         rs.getString("numero_factura"),
@@ -73,7 +74,8 @@ public class InvoiceDao {
                         rs.getBigDecimal("monto_impuesto"),
                         rs.getBigDecimal("monto_total"),
                         findCompany(),
-                        customers.findById(rs.getInt("id_cliente")).orElseThrow(),
+                        customers.findById(customerId).orElseThrow(
+                                () -> new IllegalStateException("Cliente no encontrado: " + customerId)),
                         findInvoiceLines(saleId)));
             }
         }

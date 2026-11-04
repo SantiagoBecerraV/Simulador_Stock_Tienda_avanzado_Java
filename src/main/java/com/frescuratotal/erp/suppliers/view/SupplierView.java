@@ -6,6 +6,7 @@ import com.frescuratotal.erp.suppliers.model.Supplier;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class SupplierView {
@@ -19,6 +20,14 @@ public class SupplierView {
     }
 
     public void show() {
+        Map<String, MenuAction> actions = Map.of(
+                "1", this::listSuppliers,
+                "2", this::addSupplier,
+                "3", this::updateSupplier,
+                "4", this::deactivateSupplier,
+                "5", this::showCatalog,
+                "6", this::addToCatalog,
+                "7", this::removeFromCatalog);
         boolean back = false;
 
         while (!back) {
@@ -36,16 +45,10 @@ public class SupplierView {
             String option = scanner.nextLine().trim();
 
             try {
-                switch (option) {
-                    case "1" -> listSuppliers();
-                    case "2" -> addSupplier();
-                    case "3" -> updateSupplier();
-                    case "4" -> deactivateSupplier();
-                    case "5" -> showCatalog();
-                    case "6" -> addToCatalog();
-                    case "7" -> removeFromCatalog();                    
-                    case "0" -> back = true;
-                    default -> System.out.println("Opcion invalida !!");
+                if (option.equals("0")) {
+                    back = true;
+                } else {
+                    actions.getOrDefault(option, () -> System.out.println("Opcion invalida !!")).run();
                 }
             } catch (SQLException | IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
@@ -60,11 +63,10 @@ public class SupplierView {
             return;
         }
 
-        List<String[]> rows = new ArrayList<>();
-        for (Supplier supplier : suppliers) {
-            rows.add(new String[]{String.valueOf(supplier.getId()), supplier.getName(), supplier.getNit(),
-                    supplier.getEmail(), supplier.isActive() ? "Activo" : "Inactivo"});
-        }
+        List<String[]> rows = suppliers.stream()
+                .map(supplier -> new String[]{String.valueOf(supplier.getId()), supplier.getName(), supplier.getNit(),
+                    supplier.getEmail(), supplier.isActive() ? "Activo" : "Inactivo"})
+                .toList();
         ConsoleTable.printTable(new String[]{"Id", "Nombre", "NIT", "Correo", "Estado"}, rows);
     }
 
@@ -106,17 +108,13 @@ public class SupplierView {
         if (lines.isEmpty()) {
             System.out.println("Este proveedor no tiene productos en el catalogo aun...");
         }
-        for (String line : lines) {
-            System.out.println(line);
-        }
+        lines.forEach(System.out::println);
     }
 
     private void addToCatalog() throws SQLException {
         int supplierId = askInt("Id del proveedor: ");
         System.out.println("Productos:");
-        for (String option : controller.listProductOptions()) {
-            System.out.println("  " + option);
-        }
+        controller.listProductOptions().forEach(option -> System.out.println("  " + option));
         int productId = askInt("Id del producto a anadir: ");
         controller.addToCatalog(supplierId, productId);
         System.out.println("Producto anadido al catalogo!!");
@@ -141,5 +139,10 @@ public class SupplierView {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("El id debe ser un numero valido...");
         }
+    }
+
+    @FunctionalInterface
+    private interface MenuAction {
+        void run() throws SQLException;
     }
 }

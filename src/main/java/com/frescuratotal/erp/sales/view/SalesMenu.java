@@ -17,6 +17,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -36,6 +37,10 @@ public class SalesMenu {
     }
 
     public void run() {
+        Map<String, MenuAction> actions = Map.of(
+                "1", this::createSale,
+                "2", () -> showLots(controller.listLots()),
+                "3", this::moveSaleToPreparation);
         while (true) {
             System.out.println("\n--- Ventas ---");
             System.out.println("1. Nueva venta");
@@ -47,12 +52,7 @@ public class SalesMenu {
                 return;
             }
             try {
-                switch (option) {
-                    case "1" -> createSale();
-                    case "2" -> showLots(controller.listLots());
-                    case "3" -> moveSaleToPreparation();
-                    default -> System.out.println("Opcion no valida.");
-                }
+                actions.getOrDefault(option, () -> System.out.println("Opcion no valida.")).run();
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
             } catch (SQLException e) {
@@ -107,11 +107,10 @@ public class SalesMenu {
             return;
         }
         System.out.println("Ventas registradas pendientes:");
-        List<String[]> rows = new ArrayList<>();
-        for (RegisteredSale v : sales) {
-            rows.add(new String[]{String.valueOf(v.saleId()), v.saleNumber(), v.customer(),
-                    "$" + v.totalAmount()});
-        }
+        List<String[]> rows = sales.stream()
+                .map(sale -> new String[]{String.valueOf(sale.saleId()), sale.saleNumber(), sale.customer(),
+                    "$" + sale.totalAmount()})
+                .toList();
         ConsoleTable.printTable(new String[]{"Id venta", "Numero", "Cliente", "Total"}, rows);
         controller.moveSaleToPreparation(parseInteger(ask("Id de la venta a pasar a preparacion")));
         System.out.println("Venta en preparacion: ya aparece en el panel de Logistica.");
@@ -136,29 +135,28 @@ public class SalesMenu {
             return;
         }
         System.out.println("Lotes disponibles (primero los que vencen antes):");
-        List<String[]> rows = new ArrayList<>();
-        for (SalesLot l : lots) {
-            String descuento = l.discountRate().signum() > 0
-                    ? l.discountRate().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
+        List<String[]> rows = lots.stream()
+                .map(lot -> {
+                    String discount = lot.discountRate().signum() > 0
+                    ? lot.discountRate().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
                     : "-";
-            rows.add(new String[]{String.valueOf(l.lotId()), l.lotNumber(), l.product(),
-                    String.valueOf(l.expirationDate()), String.valueOf(l.quantity()),
-                    "$" + l.salePrice(), l.status(), descuento});
-        }
+                    return new String[]{String.valueOf(lot.lotId()), lot.lotNumber(), lot.product(),
+                        String.valueOf(lot.expirationDate()), String.valueOf(lot.quantity()),
+                        "$" + lot.salePrice(), lot.status(), discount};
+                })
+                .toList();
         ConsoleTable.printTable(new String[]{"Id", "Numero de lote", "Producto", "Vence",
             "Existencias", "Precio", "Estado", "Descuento"}, rows);
     }
 
     private void showOrderSummary(List<OrderLine> orderLines) {
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal total = orderLines.stream().map(OrderLine::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         System.out.println("\nResumen del pedido:");
-        List<String[]> rows = new ArrayList<>();
-        for (OrderLine l : orderLines) {
-            rows.add(new String[]{l.lot().product(), String.valueOf(l.quantity()),
-                    "$" + l.subtotal(), "$" + l.discountAmount(), "$" + l.taxAmount(),
-                    "$" + l.lineTotal()});
-            total = total.add(l.lineTotal());
-        }
+        List<String[]> rows = orderLines.stream()
+                .map(line -> new String[]{line.lot().product(), String.valueOf(line.quantity()),
+                        "$" + line.subtotal(), "$" + line.discountAmount(), "$" + line.taxAmount(),
+                        "$" + line.lineTotal()})
+                .toList();
         ConsoleTable.printTable(new String[]{"Producto", "Cantidad", "Subtotal", "Descuento", "Impuesto", "Total"}, rows);
         System.out.println("TOTAL: $" + total);
     }
@@ -182,5 +180,10 @@ public class SalesMenu {
     private String ask(String label) {
         System.out.print(label + ": ");
         return input.nextLine().trim();
+    }
+
+    @FunctionalInterface
+    private interface MenuAction {
+        void run() throws SQLException;
     }
 }

@@ -1,3 +1,4 @@
+-- ADVERTENCIA: DROP DATABASE borra la base completa. Ejecutar solo en desarrollo.
 DROP DATABASE IF EXISTS erp_frescura_total;
 CREATE DATABASE erp_frescura_total CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE erp_frescura_total;
@@ -60,10 +61,12 @@ CREATE TABLE productos (
     id_producto INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
     descripcion TEXT,
+    codigo_barras VARCHAR(50),
     id_categoria INT NOT NULL,
     unidad_medida VARCHAR(20) NOT NULL COMMENT 'Ej: kg, litro, unidad',
     precio_base DECIMAL(10, 2),
-    FOREIGN KEY (id_categoria) REFERENCES categorias_producto(id_categoria)
+    FOREIGN KEY (id_categoria) REFERENCES categorias_producto(id_categoria),
+    INDEX idx_producto_codigo_barras (codigo_barras)
 ) ENGINE=InnoDB;
 
 CREATE TABLE productos_proveedor (
@@ -90,9 +93,9 @@ CREATE TABLE lotes_inventario (
     pasillo VARCHAR(50),
     estante VARCHAR(50),
     id_estado INT NOT NULL,
-    FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
-    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor),
-    FOREIGN KEY (id_estado) REFERENCES estados_lote(id_estado),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE RESTRICT,
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor) ON DELETE RESTRICT,
+    FOREIGN KEY (id_estado) REFERENCES estados_lote(id_estado) ON DELETE RESTRICT,
     INDEX idx_fecha_vencimiento (fecha_vencimiento),
     INDEX idx_estado (id_estado),
     INDEX idx_producto (id_producto)

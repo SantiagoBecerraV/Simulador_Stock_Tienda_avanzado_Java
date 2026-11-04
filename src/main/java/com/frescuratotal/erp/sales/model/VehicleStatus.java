@@ -17,11 +17,9 @@ public enum VehicleStatus {
     }
 
     public static VehicleStatus fromDatabaseValue(String value) {
-        for (VehicleStatus status : values()) {
-            if (status.databaseValue.equals(value)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Estado de vehiculo desconocido: " + value);
+        return java.util.Arrays.stream(values())
+                .filter(status -> status.databaseValue.equals(value))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Estado de vehiculo desconocido: " + value));
     }
 }

@@ -17,6 +17,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 public class LogisticsDao {
 
@@ -27,10 +28,6 @@ public class LogisticsDao {
             + "LEFT JOIN asignaciones_entrega a ON a.id_ruta = r.id_ruta "
             + "LEFT JOIN vehiculos ve ON ve.id_vehiculo = a.id_vehiculo "
             + "LEFT JOIN conductores co ON co.id_conductor = a.id_conductor ";
-
-    // Ruta que aun no termina. Se arma con valores fijos del enum (no con datos del usuario).
-    private static final String PENDING_ROUTE_CONDITION = "r.estado IN ('" + RouteStatus.PLANNED.databaseValue() + "', '"
-            + RouteStatus.IN_TRANSIT.databaseValue() + "')";
 
     // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection connection;
@@ -261,15 +258,27 @@ public class LogisticsDao {
     // Un vehiculo (o conductor) esta ocupado si esta en otra ruta que aun no termina.
     // idRutaExcluida es la ruta que se esta editando (use 0 para no excluir ninguna).
     public boolean isVehicleBusy(int vehicleId, int excludedRouteId) throws SQLException {
-        return exists("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
-                + "WHERE a.id_vehiculo = ? AND a.id_ruta <> ? AND " + PENDING_ROUTE_CONDITION,
-                vehicleId, excludedRouteId);
+        String sql = "SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
+                + "WHERE a.id_vehiculo = ? AND a.id_ruta <> ? AND r.estado IN (?, ?)";
+        return isResourceBusy(sql, vehicleId, excludedRouteId);
     }
 
     public boolean isDriverBusy(int driverId, int excludedRouteId) throws SQLException {
-        return exists("SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
-                + "WHERE a.id_conductor = ? AND a.id_ruta <> ? AND " + PENDING_ROUTE_CONDITION,
-                driverId, excludedRouteId);
+        String sql = "SELECT 1 FROM asignaciones_entrega a JOIN rutas_entrega r ON r.id_ruta = a.id_ruta "
+                + "WHERE a.id_conductor = ? AND a.id_ruta <> ? AND r.estado IN (?, ?)";
+        return isResourceBusy(sql, driverId, excludedRouteId);
+    }
+
+    private boolean isResourceBusy(String sql, int resourceId, int excludedRouteId) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, resourceId);
+            ps.setInt(2, excludedRouteId);
+            ps.setString(3, RouteStatus.PLANNED.databaseValue());
+            ps.setString(4, RouteStatus.IN_TRANSIT.databaseValue());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     // Si la ruta ya tenia vehiculo y conductor, se cambian; si no, se crea la asignacion.
@@ -493,8 +502,16 @@ public class LogisticsDao {
     // Consulta con parametros enteros: true si devuelve al menos una fila.
     private boolean exists(String sql, int... parameters) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            for (int i = 0; i < parameters.length; i++) {
-                ps.setInt(i + 1, parameters[i]);
+            try {
+                IntStream.range(0, parameters.length).forEach(i -> {
+                    try {
+                        ps.setInt(i + 1, parameters[i]);
+                    } catch (SQLException e) {
+                        throw new SqlRuntimeException(e);
+                    }
+                });
+            } catch (SqlRuntimeException e) {
+                throw e.exception;
             }
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -517,5 +534,12 @@ public class LogisticsDao {
                 rs.getTimestamp("hora_llegada_estimada"), rs.getTimestamp("hora_salida_real"),
                 rs.getTimestamp("hora_llegada_real"), RouteStatus.fromDatabaseValue(rs.getString("estado")),
                 rs.getString("placa"), rs.getString("conductor"));
+    }
+    private static final class SqlRuntimeException extends RuntimeException {
+        private final SQLException exception;
+
+        private SqlRuntimeException(SQLException exception) {
+            this.exception = exception;
+        }
     }
 }

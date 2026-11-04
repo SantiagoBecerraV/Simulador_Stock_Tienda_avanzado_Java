@@ -27,6 +27,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 
 /**
@@ -46,36 +48,39 @@ public class InvoicePdf {
     public static void generate(Invoice f, Path destination) throws IOException {
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
         try (OutputStream output = Files.newOutputStream(destination)) {
-            PdfWriter.getInstance(document, output);
-            document.open();
+            try {
+                PdfWriter.getInstance(document, output);
+                document.open();
 
-            document.add(new Paragraph("FACTURA DE DEMOSTRACION - DOCUMENTO SIMULADO, SIN VALIDEZ FISCAL", WARNING_FONT));
-            document.add(new Paragraph(f.company().name(), TITLE_FONT));
-            document.add(new Paragraph("NIT: " + f.company().nit() + " (NIT de demostracion)", NORMAL_FONT));
-            document.add(new Paragraph(f.company().address() + ", " + f.company().city()
-                    + " | Tel: " + f.company().phone() + " | " + f.company().email(), NORMAL_FONT));
+                document.add(new Paragraph("FACTURA DE DEMOSTRACION - DOCUMENTO SIMULADO, SIN VALIDEZ FISCAL", WARNING_FONT));
+                document.add(new Paragraph(f.company().name(), TITLE_FONT));
+                document.add(new Paragraph("NIT: " + f.company().nit() + " (NIT de demostracion)", NORMAL_FONT));
+                document.add(new Paragraph(f.company().address() + ", " + f.company().city()
+                        + " | Tel: " + f.company().phone() + " | " + f.company().email(), NORMAL_FONT));
 
-            document.add(new Paragraph("\nFactura No. " + f.invoiceNumber() + "   |   Venta: " + f.saleNumber()
-                    + "   |   Fecha: " + f.issuedAt(), BOLD_FONT));
+                document.add(new Paragraph("\nFactura No. " + f.invoiceNumber() + "   |   Venta: " + f.saleNumber()
+                        + "   |   Fecha: " + f.issuedAt(), BOLD_FONT));
 
-            document.add(new Paragraph("\nCliente", BOLD_FONT));
-            document.add(new Paragraph(f.customer().name() + " | Documento: " + f.customer().document()
-                    + " | " + f.customer().typeName(), NORMAL_FONT));
-            document.add(new Paragraph(text(f.customer().address()) + " | Tel: " + text(f.customer().phone())
-                    + " | " + text(f.customer().email()), NORMAL_FONT));
+                document.add(new Paragraph("\nCliente", BOLD_FONT));
+                document.add(new Paragraph(f.customer().name() + " | Documento: " + f.customer().document()
+                        + " | " + f.customer().typeName(), NORMAL_FONT));
+                document.add(new Paragraph(text(f.customer().address()) + " | Tel: " + text(f.customer().phone())
+                        + " | " + text(f.customer().email()), NORMAL_FONT));
 
-            document.add(new Paragraph(" "));
-            document.add(renderInvoiceLines(f));
-            document.add(new Paragraph(" "));
-            document.add(renderInvoiceTotals(f));
+                document.add(new Paragraph(" "));
+                document.add(renderInvoiceLines(f));
+                document.add(new Paragraph(" "));
+                document.add(renderInvoiceTotals(f));
 
-            document.add(new Paragraph("\nCUFE (simulado): " + f.cufe(), NORMAL_FONT));
-            document.add(generateQrCode(f.qrLink()));
-            document.add(new Paragraph("QR simulado de demostracion. No corresponde a un documento "
-                    + "electronico validado por la DIAN.", WARNING_FONT));
-            document.close();
-        } catch (DocumentException | WriterException e) {
-            throw new IOException("No se pudo generar el PDF: " + e.getMessage(), e);
+                document.add(new Paragraph("\nCUFE (simulado): " + f.cufe(), NORMAL_FONT));
+                document.add(generateQrCode(f.qrLink()));
+                document.add(new Paragraph("QR simulado de demostracion. No corresponde a un documento "
+                        + "electronico validado por la DIAN.", WARNING_FONT));
+            } catch (DocumentException | WriterException e) {
+                throw new IOException("No se pudo generar el PDF: " + e.getMessage(), e);
+            } finally {
+                document.close();
+            }
         }
     }
 
@@ -83,10 +88,9 @@ public class InvoicePdf {
         PdfPTable table = new PdfPTable(7);
         table.setWidthPercentage(100);
         table.setWidths(new float[] {26, 12, 8, 14, 14, 12, 14});
-        for (String title : new String[] {"Producto", "Lote", "Cant.", "Precio unit.", "Descuento", "Impuesto", "Total"}) {
-            table.addCell(cell(title, BOLD_FONT, Element.ALIGN_LEFT));
-        }
-        for (InvoiceLine l : f.lines()) {
+        Arrays.stream(new String[] {"Producto", "Lote", "Cant.", "Precio unit.", "Descuento", "Impuesto", "Total"})
+                .forEach(title -> table.addCell(cell(title, BOLD_FONT, Element.ALIGN_LEFT)));
+        f.lines().forEach(l -> {
             table.addCell(cell(l.product(), NORMAL_FONT, Element.ALIGN_LEFT));
             table.addCell(cell(l.lotNumber(), NORMAL_FONT, Element.ALIGN_LEFT));
             table.addCell(cell(l.quantity().toPlainString(), NORMAL_FONT, Element.ALIGN_RIGHT));
@@ -96,7 +100,7 @@ public class InvoicePdf {
             table.addCell(cell(l.taxAmount().toPlainString() + " (" + formatPercentage(l.taxRate()) + ")",
                     NORMAL_FONT, Element.ALIGN_RIGHT));
             table.addCell(cell(l.lineTotal().toPlainString(), NORMAL_FONT, Element.ALIGN_RIGHT));
-        }
+        });
         return table;
     }
 
@@ -136,13 +140,12 @@ public class InvoicePdf {
     private static Image generateQrCode(String data) throws WriterException, IOException, DocumentException {
         BitMatrix matrix = new QRCodeWriter().encode(data, BarcodeFormat.QR_CODE, 150, 150);
         BufferedImage image = new BufferedImage(matrix.getWidth(), matrix.getHeight(), BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < matrix.getWidth(); x++) {
-            for (int y = 0; y < matrix.getHeight(); y++) {
-                image.setRGB(x, y, matrix.get(x, y) ? Color.BLACK.getRGB() : Color.WHITE.getRGB());
-            }
+        IntStream.range(0, matrix.getWidth()).forEach(x ->
+                IntStream.range(0, matrix.getHeight()).forEach(y ->
+                        image.setRGB(x, y, matrix.get(x, y) ? Color.BLACK.getRGB() : Color.WHITE.getRGB())));
+        try (ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
+            ImageIO.write(image, "png", bytes);
+            return Image.getInstance(bytes.toByteArray());
         }
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", bytes);
-        return Image.getInstance(bytes.toByteArray());
     }
 }

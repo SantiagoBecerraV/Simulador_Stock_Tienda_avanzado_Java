@@ -22,21 +22,22 @@ public class SalesDao {
     // del estado del lote; si no hay promocion, es 0. La condicion e.nombre = 'Proximo a Vencer'
     // no sobra: limita los descuentos a lotes proximos a vencer aunque exista una promocion
     // configurada para otro estado.
-    private static final String LOTES_VENDIBLES =
-            "SELECT l.id_lote, l.numero_lote, p.nombre AS producto, l.fecha_vencimiento, l.cantidad, "
-            + "l.precio_venta, e.nombre AS estado, "
-            + "COALESCE((SELECT MAX(pr.tasa_descuento) FROM promociones pr "
-            + "           WHERE pr.activa = TRUE AND e.nombre = 'Proximo a Vencer' "
-            + "           AND pr.aplica_estado_lote = l.id_estado "
-            + "           AND (pr.aplica_categoria_producto IS NULL OR pr.aplica_categoria_producto = p.id_categoria) "
-            + "           AND (pr.fecha_inicio IS NULL OR pr.fecha_inicio <= CURDATE()) "
-            + "           AND (pr.fecha_fin IS NULL OR pr.fecha_fin >= CURDATE())), 0) AS tasa_descuento "
-            + "FROM lotes_inventario l "
-            + "JOIN productos p ON p.id_producto = l.id_producto "
-            + "JOIN estados_lote e ON e.id_estado = l.id_estado "
-            + "WHERE e.nombre IN ('Disponible', 'Proximo a Vencer') "
-            + "AND l.cantidad > 0 AND l.fecha_vencimiento >= CURDATE() "
-            + "ORDER BY l.fecha_vencimiento ASC, l.id_lote ASC";
+    private static final String LOTES_VENDIBLES = """
+            SELECT l.id_lote, l.numero_lote, p.nombre AS producto, l.fecha_vencimiento, l.cantidad,
+                   l.precio_venta, e.nombre AS estado,
+                   COALESCE((SELECT MAX(pr.tasa_descuento) FROM promociones pr
+                             WHERE pr.activa = TRUE AND e.nombre = 'Proximo a Vencer'
+                             AND pr.aplica_estado_lote = l.id_estado
+                             AND (pr.aplica_categoria_producto IS NULL OR pr.aplica_categoria_producto = p.id_categoria)
+                             AND (pr.fecha_inicio IS NULL OR pr.fecha_inicio <= CURDATE())
+                             AND (pr.fecha_fin IS NULL OR pr.fecha_fin >= CURDATE())), 0) AS tasa_descuento
+            FROM lotes_inventario l
+            JOIN productos p ON p.id_producto = l.id_producto
+            JOIN estados_lote e ON e.id_estado = l.id_estado
+            WHERE e.nombre IN ('Disponible', 'Proximo a Vencer')
+              AND l.cantidad > 0 AND l.fecha_vencimiento >= CURDATE()
+            ORDER BY l.fecha_vencimiento ASC, l.id_lote ASC
+            """;
 
     // La conexion viene del paquete comun compartido; este DAO no abre la suya.
     private final Connection connection;
@@ -96,9 +97,15 @@ public class SalesDao {
         connection.setAutoCommit(false);
         try {
             int saleId = insertSale(customerId, lines);
-            for (OrderLine line : lines) {
-                subtractStock(line);
+            if (!forEachLine(lines, line -> {
+                if (subtractStock(line) == 0) {
+                    return false;
+                }
                 insertSaleDetail(saleId, line);
+                return true;
+            })) {
+                connection.rollback();
+                return 0;
             }
             connection.commit();
             return saleId;
@@ -111,16 +118,10 @@ public class SalesDao {
     }
 
     private int insertSale(int customerId, List<OrderLine> lines) throws SQLException {
-        BigDecimal subtotal = BigDecimal.ZERO;
-        BigDecimal descuento = BigDecimal.ZERO;
-        BigDecimal impuesto = BigDecimal.ZERO;
-        BigDecimal total = BigDecimal.ZERO;
-        for (OrderLine l : lines) {
-            subtotal = subtotal.add(l.subtotal());
-            descuento = descuento.add(l.discountAmount());
-            impuesto = impuesto.add(l.taxAmount());
-            total = total.add(l.lineTotal());
-        }
+        BigDecimal subtotal = lines.stream().map(OrderLine::subtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal descuento = lines.stream().map(OrderLine::discountAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal impuesto = lines.stream().map(OrderLine::taxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = lines.stream().map(OrderLine::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         String saleNumber = "V-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
         String sql = "INSERT INTO ventas (numero_venta, id_cliente, subtotal, total_descuento, total_impuesto, "
                 + "monto_total, id_estado) VALUES (?, ?, ?, ?, ?, ?, "
@@ -142,7 +143,7 @@ public class SalesDao {
 
     // Verificacion y descuento en un solo UPDATE: la fila queda bloqueada hasta el commit y
     // solo se actualiza si todavia hay existencias y el lote sigue siendo vendible.
-    private void subtractStock(OrderLine line) throws SQLException {
+    private int subtractStock(OrderLine line) throws SQLException {
         String sql = "UPDATE lotes_inventario SET cantidad = cantidad - ? "
                 + "WHERE id_lote = ? AND cantidad >= ? AND fecha_vencimiento >= CURDATE() "
                 + "AND id_estado IN (SELECT id_estado FROM estados_lote WHERE nombre IN ('Disponible', 'Proximo a Vencer'))";
@@ -150,10 +151,7 @@ public class SalesDao {
             ps.setBigDecimal(1, line.quantity());
             ps.setInt(2, line.lot().lotId());
             ps.setBigDecimal(3, line.quantity());
-            if (ps.executeUpdate() == 0) {
-                throw new IllegalArgumentException("Ya no hay existencias suficientes del lote "
-                        + line.lot().lotNumber() + ". La venta no se registro.");
-            }
+            return ps.executeUpdate();
         }
     }
 
@@ -173,6 +171,32 @@ public class SalesDao {
             ps.setBigDecimal(9, line.subtotal());
             ps.setBigDecimal(10, line.lineTotal());
             ps.executeUpdate();
+        }
+    }
+    private boolean forEachLine(List<OrderLine> lines, SqlLineAction action) throws SQLException {
+        try {
+            return lines.stream().allMatch(line -> {
+                try {
+                    return action.run(line);
+                } catch (SQLException e) {
+                    throw new SqlRuntimeException(e);
+                }
+            });
+        } catch (SqlRuntimeException e) {
+            throw e.exception;
+        }
+    }
+
+    @FunctionalInterface
+    private interface SqlLineAction {
+        boolean run(OrderLine line) throws SQLException;
+    }
+
+    private static final class SqlRuntimeException extends RuntimeException {
+        private final SQLException exception;
+
+        private SqlRuntimeException(SQLException exception) {
+            this.exception = exception;
         }
     }
 }

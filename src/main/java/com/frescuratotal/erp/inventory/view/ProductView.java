@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 public class ProductView {
 
@@ -19,6 +20,11 @@ public class ProductView {
     }
 
     public void show() {
+        Map<String, MenuAction> actions = Map.of(
+                "1", this::listProducts,
+                "2", this::addProduct,
+                "3", this::updateProduct,
+                "4", this::deleteProduct);
         boolean back = false;
 
         while (!back) {
@@ -33,13 +39,10 @@ public class ProductView {
             String option = scanner.nextLine().trim();
 
             try {
-                switch (option) {
-                    case "1" -> listProducts();
-                    case "2" -> addProduct();
-                    case "3" -> updateProduct();
-                    case "4" -> deleteProduct();
-                    case "0" -> back = true;
-                    default -> System.out.println("Opcion invalida!!! ");
+                if (option.equals("0")) {
+                    back = true;
+                } else {
+                    actions.getOrDefault(option, () -> System.out.println("Opcion invalida!!! ")).run();
                 }
             } catch (SQLException | IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
@@ -54,11 +57,10 @@ public class ProductView {
             return;
         }
 
-        List<String[]> rows = new ArrayList<>();
-        for (Product product : products) {
-            rows.add(new String[]{String.valueOf(product.getId()), product.getName(), product.getUnit(),
-                    "$" + product.getBasePrice(), String.valueOf(product.getCategoryId())});
-        }
+        List<String[]> rows = products.stream()
+                .map(product -> new String[]{String.valueOf(product.getId()), product.getName(), product.getUnit(),
+                    "$" + product.getBasePrice(), String.valueOf(product.getCategoryId())})
+                .toList();
         ConsoleTable.printTable(new String[]{"Id", "Nombre", "Unidad", "Precio base", "Id categoria"}, rows);
     }
 
@@ -96,9 +98,7 @@ public class ProductView {
 
     private void showCategories() throws SQLException {
         System.out.println("Categorias: ");
-        for (String category : controller.listCategories()) {
-            System.out.println("  " + category);
-        }
+        controller.listCategories().forEach(category -> System.out.println("  " + category));
     }
 
     private String ask(String prompt) {
@@ -120,5 +120,10 @@ public class ProductView {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("El precio debe ser un numero, por ejemplo 5500 o 5500.50...");
         }
+    }
+
+    @FunctionalInterface
+    private interface MenuAction {
+        void run() throws SQLException;
     }
 }

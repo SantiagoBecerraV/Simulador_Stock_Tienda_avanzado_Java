@@ -86,6 +86,10 @@ public class SalesController {
             throw new IllegalArgumentException("El pedido no tiene productos.");
         }
         findCustomer(customerId);
-        return dao.registerSale(customerId, orderLines);
+        int saleId = dao.registerSale(customerId, orderLines);
+        if (saleId == 0) {
+            throw new IllegalArgumentException("Las existencias cambiaron durante la venta. Revisa los lotes e intenta de nuevo.");
+        }
+        return saleId;
     }
 }

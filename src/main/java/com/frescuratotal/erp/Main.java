@@ -13,35 +13,47 @@ import com.frescuratotal.erp.sales.view.LogisticsMenu;
 import com.frescuratotal.erp.sales.view.SalesMenu;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.function.IntConsumer;
 
 public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        Runtime.getRuntime().addShutdownHook(new Thread(Main::closeDatabaseConnection));
         SupplierView supplierView = new SupplierView(scanner, new SupplierController());
         ProductView productView = new ProductView(scanner, new ProductController());    
         LotView lotView = new LotView(scanner, new LotController());
-        boolean running = true;
+        Map<Integer, IntConsumer> actions = Map.of(
+                1, ignored -> productView.show(),
+                2, ignored -> supplierView.show(),
+                3, ignored -> lotView.show(),
+                4, option -> openSalesModule(option, scanner),
+                5, option -> openSalesModule(option, scanner),
+                6, option -> openSalesModule(option, scanner),
+                7, option -> openSalesModule(option, scanner));
 
-        while (running) {
-            printMenu();
-            int option = readOption(scanner);
-
-            switch (option) {
-                case 1 -> productView.show();
-                case 2 -> supplierView.show();
-                case 3 -> lotView.show();
-                case 4, 5, 6, 7 -> openSalesModule(option, scanner);
-                case 0 -> {
-                    running = false;
+        try {
+            while (true) {
+                printMenu();
+                int option = readOption(scanner);
+                if (option == 0) {
                     System.out.println("Saliendo...\n");
+                    break;
                 }
-                default -> System.out.println("Opcion invalida.\n");
+                try {
+                    actions.getOrDefault(option, ignored -> System.out.println("Opcion invalida.\n"))
+                            .accept(option);
+                } catch (Exception e) {
+                    System.out.println("Ocurrio un error en el modulo. Puedes volver a intentarlo.");
+                    e.printStackTrace();
+                }
             }
+        } finally {
+            scanner.close();
+            closeDatabaseConnection();
         }
-
-        scanner.close();
     }
 
     private static void printMenu() {
@@ -61,14 +73,24 @@ public class Main {
     private static void openSalesModule(int option, Scanner scanner) {
         try {
             Connection connection = DatabaseConnection.getConnection();
-            switch (option) {
-                case 4 -> new SalesMenu(scanner, connection).run();
-                case 5 -> new BillingMenu(scanner, connection).run();
-                case 6 -> new CustomerMenu(scanner, connection).run();
-                case 7 -> new LogisticsMenu(scanner, connection).run();
-            }
+            Map<Integer, Runnable> actions = Map.of(
+                    4, () -> new SalesMenu(scanner, connection).run(),
+                    5, () -> new BillingMenu(scanner, connection).run(),
+                    6, () -> new CustomerMenu(scanner, connection).run(),
+                    7, () -> new LogisticsMenu(scanner, connection).run());
+            actions.getOrDefault(option, () -> System.out.println("Opcion invalida.\n")).run();
         } catch (SQLException e) {
-            System.out.println("No se pudo conectar a la base de datos: " + e.getMessage());
+            System.out.println("No se pudo conectar a MySQL en localhost:3307: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void closeDatabaseConnection() {
+        try {
+            DatabaseConnection.close();
+        } catch (SQLException e) {
+            System.out.println("No se pudo cerrar la conexion a la base de datos: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

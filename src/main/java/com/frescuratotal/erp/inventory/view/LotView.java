@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 public class LotView {
 
@@ -21,6 +22,12 @@ public class LotView {
     }
 
     public void show() {
+        Map<String, MenuAction> actions = Map.ofEntries(
+                Map.entry("1", this::receiveLot), Map.entry("2", this::listLots),
+                Map.entry("3", this::runExpirationCheck), Map.entry("4", this::quarantineLot),
+                Map.entry("5", this::inspectLot), Map.entry("6", this::registerWaste),
+                Map.entry("7", this::lotsBySupplier), Map.entry("8", this::sellableStock),
+                Map.entry("9", this::lotHistory));
         boolean back = false;
 
         while (!back) {
@@ -40,18 +47,10 @@ public class LotView {
             String option = scanner.nextLine().trim();
 
             try {
-                switch (option) {
-                    case "1" -> receiveLot();
-                    case "2" -> listLots();
-                    case "3" -> runExpirationCheck();   
-                    case "4" -> quarantineLot();
-                    case "5" -> inspectLot();
-                    case "6" -> registerWaste();    
-                    case "7" -> lotsBySupplier();
-                    case "8" -> sellableStock();
-                    case "9" -> lotHistory();                    
-                    case "0" -> back = true;
-                    default -> System.out.println("Opcion invalida!!");
+                if (option.equals("0")) {
+                    back = true;
+                } else {
+                    actions.getOrDefault(option, () -> System.out.println("Opcion invalida!!")).run();
                 }
             } catch (SQLException | IllegalArgumentException e) {
                 System.out.println("Error!! : " + e.getMessage());
@@ -81,13 +80,12 @@ public class LotView {
             return;
         }
 
-        List<String[]> rows = new ArrayList<>();
-        for (Lot lot : lots) {
-            rows.add(new String[]{String.valueOf(lot.getId()), lot.getLotNumber(),
+        List<String[]> rows = lots.stream()
+                .map(lot -> new String[]{String.valueOf(lot.getId()), lot.getLotNumber(),
                     String.valueOf(lot.getProductId()), String.valueOf(lot.getSupplierId()),
                     String.valueOf(lot.getQuantity()), String.valueOf(lot.getExpirationDate()),
-                    lot.getStatus().toString()});
-        }
+                    lot.getStatus().toString()})
+                .toList();
         ConsoleTable.printTable(new String[]{"Id", "Numero de lote", "Id producto", "Id proveedor",
             "Existencias", "Vencimiento", "Estado"}, rows);
     }
@@ -153,9 +151,7 @@ public class LotView {
         if (lines.isEmpty()) {
             System.out.println(emptyMessage);
         }
-        for (String line : lines) {
-            System.out.println(line);
-        }
+        lines.forEach(System.out::println);
     }
     
     private String ask(String prompt) {
@@ -191,5 +187,10 @@ public class LotView {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("La fecha debe tener el formato EJ: 2026-12-31");
         }
+    }
+
+    @FunctionalInterface
+    private interface MenuAction {
+        void run() throws SQLException;
     }
 }

@@ -23,10 +23,20 @@ public class DatabaseConnection {
     private DatabaseConnection() {
     }
 
-    public static Connection getConnection() throws SQLException {
+    public static synchronized Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
             connection = DriverManager.getConnection(URL, USER, PASSWORD);
         }
         return connection;
+    }
+
+    public static synchronized void close() throws SQLException {
+        if (connection != null) {
+            try {
+                connection.close();
+            } finally {
+                connection = null;
+            }
+        }
     }
 }

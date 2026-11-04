@@ -29,11 +29,9 @@ public enum LotStatus {
     
     // Convierte el numero almacenado en la base de datos en el valor del enum.
     public static LotStatus fromId(int id) {
-        for (LotStatus status : values()) {
-            if (status.id == id) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Estado de lote desconocido: " + id);
+        return java.util.Arrays.stream(values())
+                .filter(status -> status.id == id)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Estado de lote desconocido: " + id));
     }
 }
