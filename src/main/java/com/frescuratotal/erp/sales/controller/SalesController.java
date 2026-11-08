@@ -1,5 +1,6 @@
 package com.frescuratotal.erp.sales.controller;
 
+import com.frescuratotal.erp.common.CustomerCache;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
 import com.frescuratotal.erp.sales.dao.SalesDao;
@@ -37,15 +38,25 @@ public class SalesController {
 
     private final SalesDao dao;
     private final CustomerDao customers;
+    private final CustomerCache customerCache;
 
     public SalesController(SalesDao dao, CustomerDao customers) {
         this.dao = dao;
         this.customers = customers;
+        this.customerCache = CustomerCache.getInstance();
     }
-
+    //tiene cambios del punto 1
+    // Usa la misma caché del módulo de clientes.
     public Customer findCustomer(int customerId) throws SQLException {
-        return customers.findById(customerId)
+        Customer cachedCustomer = customerCache.get(customerId);
+        if (cachedCustomer != null) {
+            return cachedCustomer;
+        }
+
+        Customer customer = customers.findById(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("No existe un cliente con id " + customerId + "."));
+        customerCache.put(customer);
+        return customer;
     }
 
     // Ya vienen ordenados por vencimiento (FEFO).

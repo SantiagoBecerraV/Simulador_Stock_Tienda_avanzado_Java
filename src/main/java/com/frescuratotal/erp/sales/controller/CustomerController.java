@@ -1,5 +1,6 @@
 package com.frescuratotal.erp.sales.controller;
 
+import com.frescuratotal.erp.common.CustomerCache;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
 import java.sql.SQLException;
@@ -15,18 +16,31 @@ public class CustomerController {
     private static final int MYSQL_DUPLICATE_ENTRY = 1062;
 
     private final CustomerDao dao;
+    //punto1
+    private final CustomerCache cache;
 
     public CustomerController(CustomerDao dao) {
         this.dao = dao;
+        //punto1
+        this.cache = CustomerCache.getInstance();
     }
 
     public List<Customer> list() throws SQLException {
         return dao.findAll();
     }
 
+    //PUNTO 1 taller
+    // Devuelve la caché o consulta MySQL una sola vez.
     public Customer get(int customerId) throws SQLException {
-        return dao.findById(customerId)
+        Customer cachedCustomer = cache.get(customerId);
+        if (cachedCustomer != null) {
+            return cachedCustomer;
+        }
+
+        Customer customer = dao.findById(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("No existe un cliente con id " + customerId + "."));
+        cache.put(customer);
+        return customer;
     }
 
     public Map<Integer, String> types() throws SQLException {
@@ -51,6 +65,8 @@ public class CustomerController {
             if (!dao.update(clean(c))) {
                 throw new IllegalArgumentException("No existe un cliente con id " + c.customerId() + ".");
             }
+            //Punto 1
+            cache.remove(c.customerId()); // La próxima búsqueda carga datos actualizados.
         } catch (SQLException e) {
             if (isDuplicate(e)) {
                 throw new IllegalArgumentException("Ya existe un cliente con el documento '" + c.document() + "'.");
@@ -66,6 +82,8 @@ public class CustomerController {
         if (!dao.delete(customerId)) {
             throw new IllegalArgumentException("No existe un cliente con id " + customerId + ".");
         }
+        //punto 1
+        cache.remove(customerId); // Un cliente eliminado no queda en caché.
     }
 
     private void validate(Customer c) throws SQLException {

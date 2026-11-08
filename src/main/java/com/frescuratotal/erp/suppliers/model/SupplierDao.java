@@ -5,10 +5,39 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+//punto 2
+import java.sql.Date;
+import java.time.LocalDate;
+//
 import java.util.ArrayList;
 import java.util.List;
 
 public class SupplierDao {
+    //punto 2
+    // Busca las compras recibidas en una fecha específica.
+    public List<DailyPurchase> findPurchasesByDate(LocalDate date) throws SQLException {
+        String sql = "SELECT l.numero_lote, p.nombre, "
+                + "(l.cantidad_inicial * l.precio_compra) AS monto_total "
+                + "FROM lotes_inventario l "
+                + "JOIN proveedores p ON p.id_proveedor = l.id_proveedor "
+                + "WHERE DATE(l.fecha_ingreso) = ? "
+                + "ORDER BY l.id_lote";
+        List<DailyPurchase> purchases = new ArrayList<>();
+
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDate(1, Date.valueOf(date));
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    purchases.add(new DailyPurchase(
+                            rs.getString("numero_lote"),
+                            rs.getString("nombre"),
+                            rs.getBigDecimal("monto_total")));
+                }
+            }
+        }
+        return purchases;
+    }
 
     public List<Supplier> findAll() throws SQLException {
         String sql = "SELECT id_proveedor, nombre, nit, persona_contacto, email, telefono, direccion, activo "

@@ -2,7 +2,10 @@ package com.frescuratotal.erp.suppliers.view;
 
 import com.frescuratotal.erp.common.ConsoleTable;
 import com.frescuratotal.erp.suppliers.controller.SupplierController;
+//punto 2
+import com.frescuratotal.erp.suppliers.model.DailyPurchaseReport;
 import com.frescuratotal.erp.suppliers.model.Supplier;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +30,9 @@ public class SupplierView {
                 "4", this::deactivateSupplier,
                 "5", this::showCatalog,
                 "6", this::addToCatalog,
-                "7", this::removeFromCatalog);
+                "7", this::removeFromCatalog,
+                //punto 2
+                "8", this::generateDailyPurchaseReport);
         boolean back = false;
 
         while (!back) {
@@ -39,6 +44,8 @@ public class SupplierView {
             System.out.println("5. Ver catalogo del proveedor");
             System.out.println("6. Agregar producto al catalogo");
             System.out.println("7. Quitar producto del catalogo");
+            //punto 2
+            System.out.println("8. Generar Reporte Diario de Compras");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
 
@@ -49,8 +56,8 @@ public class SupplierView {
                     back = true;
                 } else {
                     actions.getOrDefault(option, () -> System.out.println("Opcion invalida !!")).run();
-                }
-            } catch (SQLException | IllegalArgumentException e) {
+                }                   //punto 2
+            } catch (SQLException | IOException | IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
             }
         }
@@ -126,6 +133,18 @@ public class SupplierView {
         boolean removed = controller.removeFromCatalog(supplierId, productId);
         System.out.println(removed ? "El producto ha sido retirado exitosamente del catalogo!!!" : "Ese producto no se ha encontrado en este catalogo...");
     }   
+    
+    //punto 2
+    // Genera el reporte de hoy sin solicitar datos.
+    private void generateDailyPurchaseReport() throws SQLException, IOException {
+        DailyPurchaseReport report = controller.generateDailyPurchaseReport();
+        System.out.println("Reporte creado: " + report.file().toAbsolutePath());
+        if (report.purchaseCount() == 0) {
+            System.out.println("No hay compras realizadas hoy para reportar.");
+        } else {
+            System.out.println("Compras incluidas: " + report.purchaseCount());
+        }
+    }
 
     private String ask(String prompt) {
         System.out.print(prompt);
@@ -143,6 +162,6 @@ public class SupplierView {
 
     @FunctionalInterface
     private interface MenuAction {
-        void run() throws SQLException;
+        void run() throws SQLException, IOException;
     }
 }
