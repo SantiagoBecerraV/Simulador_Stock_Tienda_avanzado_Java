@@ -138,7 +138,8 @@ src/main/java/com/frescuratotal/erp/
 │   ├── controller/          # ProductController, LotController
 │   ├── model/               # Product, Lot, LotStatus, ProductDao, LotDao, QualityDao, TraceabilityDao
 │   └── view/                # ProductView, LotView
-├── suppliers/               # Gestión de proveedores y catálogo de compras
+├── suppliers/               # Gestión de proveedores, catálogo de compras y analíticas
+│   ├── analytics/           # LoteProveedor, SupplierAnalyticsDao, SupplierAnalyticsService
 │   ├── controller/          # SupplierController
 │   ├── model/               # Supplier, SupplierDao
 │   └── view/                # SupplierView
@@ -160,6 +161,18 @@ src/main/java/com/frescuratotal/erp/
 | **Ventas** | `SalesController` | `SalesDao` | `SalesLot`, `OrderLine`, `RegisteredSale` | `SalesMenu` |
 | **Facturación** | `BillingController` | `InvoiceDao` | `Invoice` | `BillingMenu`, `InvoicePdf` |
 | **Logística** | `LogisticsController` | `LogisticsDao` | `Vehicle`, `Driver`, `Route`, `RouteDelivery` | `LogisticsMenu` |
+| **Analítica de Proveedores** | `SupplierAnalyticsService` | `SupplierAnalyticsDao` | `LoteProveedor` | Salida en consola (Reporte de Rendimiento) |
+
+### Módulo de Analíticas
+
+El **Módulo de Analíticas** proporciona al departamento de compras una herramienta para evaluar el rendimiento histórico y la calidad de los proveedores registrados en el inventario:
+
+* **Propósito:** Analizar la información de los lotes de inventario mediante la API de Streams de Java para transformar los datos operativos en métricas cuantitativas clave, accesibles directamente desde el menú principal de la aplicación.
+* **Información que proporciona:**
+  1. **Proveedor con mayor volumen de suministro:** Identifica y muestra el proveedor con el mayor volumen acumulado de productos suministrados (sumando la cantidad inicial de todos sus lotes), junto con la cantidad total suministrada.
+  2. **Proveedores con lotes vencidos:** Presenta un listado consolidado y sin duplicados de todos los proveedores que tienen actualmente registrado al menos un lote con estado "Vencido".
+  3. **Control ante inventario vacío:** Si no existen lotes de inventario registrados, informa de manera clara: `"No hay datos de inventario suficientes para generar estadísticas."`.
+* **Toma de decisiones en compras:** Permite al departamento de compras reconocer a sus aliados comerciales más importantes en términos de volumen para negociar mejores precios, plazos o condiciones de abastecimiento; y al mismo tiempo, identificar con claridad qué proveedores representan un riesgo para la calidad del inventario debido a incidencias de vencimiento, facilitando la toma de acciones correctivas, auditorías de calidad o la renegociación de acuerdos comerciales.
 
 ### Flujo del negocio:
 Los módulos no se acoplan directamente entre sí, sino que colaboran mediante los estados del pedido en la base de datos:

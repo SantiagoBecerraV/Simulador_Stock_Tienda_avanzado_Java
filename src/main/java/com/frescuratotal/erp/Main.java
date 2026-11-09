@@ -1,5 +1,6 @@
 package com.frescuratotal.erp;
 
+import com.frescuratotal.erp.suppliers.analytics.SupplierAnalyticsService;
 import com.frescuratotal.erp.common.DatabaseConnection;
 import com.frescuratotal.erp.suppliers.controller.SupplierController;
 import com.frescuratotal.erp.suppliers.view.SupplierView;
@@ -25,6 +26,7 @@ public class Main {
         SupplierView supplierView = new SupplierView(scanner, new SupplierController());
         ProductView productView = new ProductView(scanner, new ProductController());    
         LotView lotView = new LotView(scanner, new LotController());
+        SupplierAnalyticsService analyticsService = new SupplierAnalyticsService();
         Map<Integer, IntConsumer> actions = Map.of(
                 1, ignored -> productView.show(),
                 2, ignored -> supplierView.show(),
@@ -32,7 +34,8 @@ public class Main {
                 4, option -> openSalesModule(option, scanner),
                 5, option -> openSalesModule(option, scanner),
                 6, option -> openSalesModule(option, scanner),
-                7, option -> openSalesModule(option, scanner));
+                7, option -> openSalesModule(option, scanner),
+                8, ignored -> analyticsService.generarReporte());
 
         try {
             while (true) {
@@ -65,6 +68,7 @@ public class Main {
         System.out.println("5. Facturacion");
         System.out.println("6. Clientes");
         System.out.println("7. Logistica");
+        System.out.println("8. Generar Reporte de Rendimiento de Proveedores");
         System.out.println("0. Salir");
         System.out.print("Escoge una opcion: ");
     }

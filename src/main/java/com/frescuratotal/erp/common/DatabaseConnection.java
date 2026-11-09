@@ -14,7 +14,7 @@ import java.sql.SQLException;
 
 public class DatabaseConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3308/erp_frescura_total";
+    private static final String URL = "jdbc:mysql://localhost:3307/erp_frescura_total";
     private static final String USER = "root";
     private static final String PASSWORD = "Campus2026";
 
