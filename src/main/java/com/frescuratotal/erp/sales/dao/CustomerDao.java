@@ -59,6 +59,43 @@ public class CustomerDao {
         }
     }
 
+    // Punto 4: indica si el documento ya está registrado.
+    public boolean documentExists(String document) throws SQLException {
+        String sql = "SELECT 1 FROM clientes WHERE documento = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, document);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    // Punto 4: inserta todos los clientes o revierte el lote completo.
+    public void insertAll(List<Customer> customers) throws SQLException {
+        String sql = "INSERT INTO clientes (nombre, documento, email, telefono, direccion, id_tipo) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        boolean originalAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (Customer customer : customers) {
+                ps.setString(1, customer.name());
+                ps.setString(2, customer.document());
+                ps.setString(3, customer.email());
+                ps.setString(4, customer.phone());
+                ps.setString(5, customer.address());
+                ps.setInt(6, customer.typeId());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            connection.commit();
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
     // fecha_registro no se incluye en el UPDATE a proposito.
     public boolean update(Customer c) throws SQLException {
         String sql = "UPDATE clientes SET nombre = ?, documento = ?, email = ?, telefono = ?, "

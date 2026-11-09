@@ -35,11 +35,11 @@ public class InvoiceDao {
         }
     }
 
-    // Los totales se copian de la venta, asi la factura siempre coincide con ella.
+    // Punto 3: copia también el costo de entrega a la factura.
     public void insert(int saleId, String invoiceNumber, String cufe, String qrLink) throws SQLException {
         String sql = "INSERT INTO facturas (id_venta, numero_factura, cufe, enlace_qr, subtotal, "
-                + "total_descuento, monto_impuesto, monto_total) "
-                + "SELECT id_venta, ?, ?, ?, subtotal, total_descuento, total_impuesto, monto_total "
+                + "total_descuento, monto_impuesto, costo_entrega, monto_total) "
+                + "SELECT id_venta, ?, ?, ?, subtotal, total_descuento, total_impuesto, costo_entrega, monto_total "
                 + "FROM ventas WHERE id_venta = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, invoiceNumber);
@@ -50,9 +50,10 @@ public class InvoiceDao {
         }
     }
 
+    // Punto 3: lee el costo de entrega para mostrarlo en la factura.
     public Optional<Invoice> findBySale(int saleId) throws SQLException {
         String sql = "SELECT f.id_factura, f.numero_factura, f.cufe, f.enlace_qr, f.fecha_emision, f.subtotal, "
-                + "f.total_descuento, f.monto_impuesto, f.monto_total, v.numero_venta, v.id_cliente "
+                + "f.total_descuento, f.monto_impuesto, f.costo_entrega, f.monto_total, v.numero_venta, v.id_cliente "
                 + "FROM facturas f JOIN ventas v ON v.id_venta = f.id_venta "
                 + "WHERE f.id_venta = ? ORDER BY f.id_factura LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -72,6 +73,7 @@ public class InvoiceDao {
                         rs.getBigDecimal("subtotal"),
                         rs.getBigDecimal("total_descuento"),
                         rs.getBigDecimal("monto_impuesto"),
+                        rs.getBigDecimal("costo_entrega"),
                         rs.getBigDecimal("monto_total"),
                         findCompany(),
                         customers.findById(customerId).orElseThrow(

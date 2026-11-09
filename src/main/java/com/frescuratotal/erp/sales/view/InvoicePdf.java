@@ -111,6 +111,8 @@ public class InvoicePdf {
         row(table, "Subtotal", f.subtotal(), NORMAL_FONT);
         row(table, "Descuentos", f.totalDiscount(), NORMAL_FONT);
         row(table, "Impuesto (IVA)", f.taxAmount(), NORMAL_FONT);
+        // Punto 3: muestra el recargo de entrega.
+        row(table, "Entrega", f.deliveryCost(), NORMAL_FONT);
         row(table, "TOTAL", f.totalAmount(), BOLD_FONT);
         return table;
     }

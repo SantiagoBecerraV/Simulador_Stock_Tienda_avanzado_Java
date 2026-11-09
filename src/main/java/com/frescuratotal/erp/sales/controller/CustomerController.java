@@ -3,9 +3,20 @@ package com.frescuratotal.erp.sales.controller;
 import com.frescuratotal.erp.common.CustomerCache;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
+// Punto 4: dependencias para leer y validar clientes desde archivo.
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Valida los datos y coordina el DAO. Los problemas del usuario se reportan
@@ -14,6 +25,10 @@ import java.util.Map;
 public class CustomerController {
 
     private static final int MYSQL_DUPLICATE_ENTRY = 1062;
+    // Punto 4: cabecera obligatoria del archivo de importación.
+    private static final String IMPORT_HEADER = "nombre;documento;correo;telefono;tipo_cliente";
+    // Punto 4: valida el formato básico del correo.
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     private final CustomerDao dao;
     //punto1
@@ -84,6 +99,92 @@ public class CustomerController {
         }
         //punto 1
         cache.remove(customerId); // Un cliente eliminado no queda en caché.
+    }
+
+    // Punto 4: valida el archivo completo antes de guardar clientes.
+    public int importCustomersFromFile(Path file) throws IOException, SQLException {
+        if (!Files.isRegularFile(file)) {
+            throw new FileNotFoundException("No se encontró el archivo clientes_importar.txt.");
+        }
+
+        List<Customer> customers = readImportFile(file);
+        for (Customer customer : customers) {
+            if (dao.documentExists(customer.document())) {
+                throw invalidImport();
+            }
+        }
+
+        try {
+            dao.insertAll(customers);
+            return customers.size();
+        } catch (SQLException e) {
+            if (isDuplicate(e)) {
+                throw invalidImport();
+            }
+            throw e;
+        }
+    }
+
+    // Punto 4: lee las filas y crea clientes válidos en memoria.
+    private List<Customer> readImportFile(Path file) throws IOException, SQLException {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+        if (lines.isEmpty() || !IMPORT_HEADER.equals(lines.get(0))) {
+            throw invalidImport();
+        }
+
+        Map<Integer, String> types = dao.findTypes();
+        List<Customer> customers = new ArrayList<>();
+        Set<String> documents = new HashSet<>();
+        for (int index = 1; index < lines.size(); index++) {
+            String line = lines.get(index).trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            Customer customer = parseImportLine(line, types);
+            if (!documents.add(customer.document())) {
+                throw invalidImport();
+            }
+            customers.add(customer);
+        }
+        return customers;
+    }
+
+    // Punto 4: convierte una fila de texto en un cliente.
+    private Customer parseImportLine(String line, Map<Integer, String> types) {
+        String[] fields = line.split(";", -1);
+        if (fields.length != 5) {
+            throw invalidImport();
+        }
+
+        String name = fields[0].trim();
+        String document = fields[1].trim();
+        String email = fields[2].trim();
+        String phone = fields[3].trim();
+        String typeName = fields[4].trim().toUpperCase(Locale.ROOT);
+        if (isBlank(name) || isBlank(document) || isBlank(email) || isBlank(phone)
+                || !EMAIL_PATTERN.matcher(email).matches()) {
+            throw invalidImport();
+        }
+
+        int typeId = findTypeId(typeName, types);
+        return new Customer(0, name, document, email, phone, null, typeId, null, null);
+    }
+
+    // Punto 4: busca el ID de MAYORISTA o MINORISTA.
+    private int findTypeId(String typeName, Map<Integer, String> types) {
+        if (!typeName.equals("MAYORISTA") && !typeName.equals("MINORISTA")) {
+            throw invalidImport();
+        }
+        return types.entrySet().stream()
+                .filter(entry -> entry.getValue().equalsIgnoreCase(typeName))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElseThrow(this::invalidImport);
+    }
+
+    // Punto 4: crea el mensaje único para datos inválidos.
+    private IllegalArgumentException invalidImport() {
+        return new IllegalArgumentException("Se encontraron registros inválidos. Importación cancelada.");
     }
 
     private void validate(Customer c) throws SQLException {

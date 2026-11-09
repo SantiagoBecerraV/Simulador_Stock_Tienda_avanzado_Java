@@ -3,6 +3,8 @@ package com.frescuratotal.erp.sales.view;
 import com.frescuratotal.erp.common.ConsoleTable;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
+import com.frescuratotal.erp.sales.model.CommercialStatistics;
+import com.frescuratotal.erp.sales.model.DeliveryMode;
 import com.frescuratotal.erp.sales.controller.BillingController;
 import com.frescuratotal.erp.sales.controller.SalesController;
 import com.frescuratotal.erp.sales.dao.InvoiceDao;
@@ -40,12 +42,16 @@ public class SalesMenu {
         Map<String, MenuAction> actions = Map.of(
                 "1", this::createSale,
                 "2", () -> showLots(controller.listLots()),
-                "3", this::moveSaleToPreparation);
+                "3", this::moveSaleToPreparation,
+                // Punto 5: opción del reporte comercial.
+                "4", this::showCommercialStatistics);
         while (true) {
             System.out.println("\n--- Ventas ---");
             System.out.println("1. Nueva venta");
             System.out.println("2. Ver lotes disponibles");
             System.out.println("3. Pasar venta a preparacion");
+            // Punto 5: muestra la opción del reporte comercial.
+            System.out.println("4. Generar Estadisticas Comerciales");
             System.out.println("0. Volver");
             String option = ask("Opcion");
             if (option.equals("0")) {
@@ -91,8 +97,14 @@ public class SalesMenu {
             return;
         }
         showOrderSummary(orderLines);
+        // Punto 3: solicita la modalidad antes de confirmar.
+        DeliveryMode deliveryMode = askDeliveryMode();
+        BigDecimal finalAmount = controller.calculateFinalAmount(orderLines, deliveryMode);
+        System.out.println("Modalidad: " + deliveryMode.getLabel());
+        System.out.println("Total con entrega: $" + finalAmount);
         if (ask("Confirmar la venta? (s/n)").equalsIgnoreCase("s")) {
-            int saleId = controller.confirmSale(customer.customerId(), orderLines);
+            // Punto 3: confirma la venta con la modalidad elegida.
+            int saleId = controller.confirmSale(customer.customerId(), orderLines, deliveryMode);
             System.out.println("Venta registrada con id " + saleId + ".");
             generateInvoice(saleId);
         } else {
@@ -114,6 +126,32 @@ public class SalesMenu {
         ConsoleTable.printTable(new String[]{"Id venta", "Numero", "Cliente", "Total"}, rows);
         controller.moveSaleToPreparation(parseInteger(ask("Id de la venta a pasar a preparacion")));
         System.out.println("Venta en preparacion: ya aparece en el panel de Logistica.");
+    }
+
+    // Punto 5: muestra el resumen creado con los datos de ventas.
+    private void showCommercialStatistics() throws SQLException {
+        CommercialStatistics statistics = controller.generateCommercialStatistics();
+        if (!statistics.hasSales()) {
+            System.out.println("No existen datos suficientes para generar estadísticas comerciales.");
+            return;
+        }
+
+        System.out.println("\n===== ESTADISTICAS COMERCIALES =====");
+        if (statistics.topCategory() == null) {
+            System.out.println("No hay ventas confirmadas para calcular la categoria principal.");
+        } else {
+            String quantity = statistics.topQuantity().stripTrailingZeros().toPlainString();
+            System.out.println("Categoria con mayor volumen vendido: " + statistics.topCategory()
+                    + " - " + quantity + " unidades");
+        }
+        System.out.println("Clientes con devoluciones:");
+        if (statistics.customersWithReturns().isEmpty()) {
+            System.out.println("No hay clientes con devoluciones.");
+        } else {
+            statistics.customersWithReturns().stream()
+                    .map(customer -> "- " + customer)
+                    .forEach(System.out::println);
+        }
     }
 
     // La factura se crea despues de guardar la venta: si falla, la venta no se pierde y se puede
@@ -159,6 +197,16 @@ public class SalesMenu {
                 .toList();
         ConsoleTable.printTable(new String[]{"Producto", "Cantidad", "Subtotal", "Descuento", "Impuesto", "Total"}, rows);
         System.out.println("TOTAL: $" + total);
+    }
+
+    // Punto 3: permite seleccionar una modalidad antes de confirmar.
+    private DeliveryMode askDeliveryMode() {
+        String option = ask("Entrega (1. Estandar / 2. Urgente)");
+        return switch (option) {
+            case "1" -> DeliveryMode.STANDARD;
+            case "2" -> DeliveryMode.URGENT;
+            default -> throw new IllegalArgumentException("La modalidad de entrega no es valida.");
+        };
     }
 
     private static int parseInteger(String text) {

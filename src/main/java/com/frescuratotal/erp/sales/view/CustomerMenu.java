@@ -4,6 +4,8 @@ import com.frescuratotal.erp.sales.controller.CustomerController;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
 import com.frescuratotal.erp.common.ConsoleTable;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +34,9 @@ public class CustomerMenu {
                 "2", () -> print(controller.get(askId())),
                 "3", this::create,
                 "4", this::update,
-                "5", this::delete);
+                "5", this::delete,
+                // Punto 4: opción de importación masiva.
+                "6", this::importCustomers);
         while (true) {
             System.out.println("\n--- Clientes ---");
             System.out.println("1. Listar");
@@ -40,6 +44,8 @@ public class CustomerMenu {
             System.out.println("3. Crear");
             System.out.println("4. Actualizar");
             System.out.println("5. Eliminar");
+            // Punto 4: muestra la opción de importación masiva.
+            System.out.println("6. Importar Clientes desde Archivo");
             System.out.println("0. Volver");
             String option = ask("Opcion");
             if (option.equals("0")) {
@@ -51,6 +57,8 @@ public class CustomerMenu {
                 System.out.println(e.getMessage());
             } catch (SQLException e) {
                 System.out.println("Error de base de datos: " + e.getMessage());
+            } catch (IOException e) {
+                System.out.println("Error: " + e.getMessage());
             }
         }
     }
@@ -82,6 +90,12 @@ public class CustomerMenu {
     private void delete() throws SQLException {
         controller.delete(askId());
         System.out.println("Cliente eliminado.");
+    }
+
+    // Punto 4: importa el archivo ubicado en la raíz del proyecto.
+    private void importCustomers() throws SQLException, IOException {
+        int total = controller.importCustomersFromFile(Path.of("clientes_importar.txt"));
+        System.out.println("Importación completada. Total de clientes registrados: " + total);
     }
 
     private int askType() throws SQLException {
@@ -147,7 +161,8 @@ public class CustomerMenu {
     }
 
     @FunctionalInterface
+    // Punto 4: permite informar errores al leer el archivo.
     private interface MenuAction {
-        void run() throws SQLException;
+        void run() throws SQLException, IOException;
     }
 }

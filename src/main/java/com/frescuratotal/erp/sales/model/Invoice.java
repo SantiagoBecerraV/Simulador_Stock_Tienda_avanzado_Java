@@ -16,6 +16,8 @@ public record Invoice(
         BigDecimal subtotal,
         BigDecimal totalDiscount,
         BigDecimal taxAmount,
+        // Punto 3: guarda el recargo de la entrega.
+        BigDecimal deliveryCost,
         BigDecimal totalAmount,
         CompanyInfo company,
         Customer customer,

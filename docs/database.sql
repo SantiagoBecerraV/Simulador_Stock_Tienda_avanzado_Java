@@ -178,6 +178,8 @@ CREATE TABLE ventas (
     subtotal DECIMAL(12, 2) NOT NULL,
     total_descuento DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     total_impuesto DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    -- Punto 3: guarda el recargo de la modalidad de entrega.
+    costo_entrega DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     monto_total DECIMAL(12, 2) NOT NULL,
     id_estado INT NOT NULL,
     usuario_registro VARCHAR(100) COMMENT 'Usuario que registró la venta',
@@ -213,6 +215,8 @@ CREATE TABLE facturas (
     subtotal DECIMAL(12, 2) NOT NULL,
     total_descuento DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     monto_impuesto DECIMAL(12, 2) NOT NULL,
+    -- Punto 3: conserva el recargo en la factura.
+    costo_entrega DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     monto_total DECIMAL(12, 2) NOT NULL,
     FOREIGN KEY (id_venta) REFERENCES ventas(id_venta),
     INDEX idx_numero (numero_factura)
@@ -308,6 +312,7 @@ INSERT INTO estados_venta (nombre, descripcion) VALUES
 ('En Preparacion', 'Pedido en preparación para despacho'),
 ('En Transito', 'Pedido en tránsito hacia el cliente'),
 ('Entregada', 'Pedido entregado al cliente'),
+('Devuelta', 'Venta devuelta por el cliente'), -- Punto 5
 ('Cancelada', 'Venta cancelada')
 ON DUPLICATE KEY UPDATE nombre = nombre;
 
@@ -2839,18 +2844,20 @@ UNION ALL SELECT 'rutas_entrega', COUNT(*) FROM rutas_entrega
 UNION ALL SELECT 'asignaciones_entrega', COUNT(*) FROM asignaciones_entrega
 UNION ALL SELECT 'ventas_ruta', COUNT(*) FROM ventas_ruta;
 
+-- Punto 3: valida también el recargo de entrega en los totales.
 -- Debe devolver 0 filas: ventas sin detalle o con totales distintos a la suma de sus detalles
-SELECT v.numero_venta, v.subtotal, v.total_descuento, v.total_impuesto, v.monto_total,
+SELECT v.numero_venta, v.subtotal, v.total_descuento, v.total_impuesto, v.costo_entrega, v.monto_total,
        SUM(d.subtotal) AS suma_subtotal, SUM(d.monto_descuento) AS suma_descuento,
        SUM(d.monto_impuesto) AS suma_impuesto, SUM(d.total_linea) AS suma_total
 FROM ventas v
 LEFT JOIN detalles_venta d ON d.id_venta = v.id_venta
-GROUP BY v.id_venta, v.numero_venta, v.subtotal, v.total_descuento, v.total_impuesto, v.monto_total
+GROUP BY v.id_venta, v.numero_venta, v.subtotal, v.total_descuento, v.total_impuesto,
+         v.costo_entrega, v.monto_total
 HAVING COUNT(d.id_detalle) = 0
     OR v.subtotal <> SUM(d.subtotal)
     OR v.total_descuento <> SUM(d.monto_descuento)
     OR v.total_impuesto <> SUM(d.monto_impuesto)
-    OR v.monto_total <> SUM(d.total_linea);
+   OR v.monto_total <> SUM(d.total_linea) + v.costo_entrega;
 
 -- Debe devolver 0 filas: lotes cuya cantidad no cuadra con lo vendido y las mermas
 SELECT l.numero_lote, l.cantidad_inicial, l.cantidad, x.vendido, y.merma
@@ -2863,11 +2870,13 @@ LEFT JOIN (SELECT id_lote, SUM(cantidad_perdida) AS merma FROM registro_mermas G
 WHERE l.cantidad < 0
    OR l.cantidad <> l.cantidad_inicial - COALESCE(x.vendido, 0) - COALESCE(y.merma, 0);
 
+-- Punto 3: verifica que la factura conserve el recargo de entrega.
 -- Debe devolver 0 filas: facturas con totales distintos a los de su venta
 SELECT f.numero_factura, v.numero_venta
 FROM facturas f JOIN ventas v ON v.id_venta = f.id_venta
 WHERE f.subtotal <> v.subtotal OR f.total_descuento <> v.total_descuento
-   OR f.monto_impuesto <> v.total_impuesto OR f.monto_total <> v.monto_total;
+   OR f.monto_impuesto <> v.total_impuesto OR f.costo_entrega <> v.costo_entrega
+   OR f.monto_total <> v.monto_total;
 
 -- Debe devolver 0 filas: lotes cuyo proveedor no tiene ese producto en productos_proveedor
 SELECT l.numero_lote

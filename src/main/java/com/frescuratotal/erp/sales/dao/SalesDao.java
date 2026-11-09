@@ -1,6 +1,7 @@
 package com.frescuratotal.erp.sales.dao;
 
 import com.frescuratotal.erp.sales.model.SaleStatus;
+import com.frescuratotal.erp.sales.model.CommercialSaleDetail;
 import com.frescuratotal.erp.sales.model.OrderLine;
 import com.frescuratotal.erp.sales.model.SalesLot;
 import com.frescuratotal.erp.sales.model.RegisteredSale;
@@ -79,6 +80,32 @@ public class SalesDao {
         return sales;
     }
 
+    // Punto 5: consulta cada detalle con su categoría, cliente y estado.
+    public List<CommercialSaleDetail> listCommercialSaleDetails() throws SQLException {
+        String sql = "SELECT v.id_venta, d.cantidad_vendida, cp.nombre AS categoria, "
+                + "c.nombre AS cliente, e.nombre AS estado "
+                + "FROM ventas v "
+                + "JOIN detalles_venta d ON d.id_venta = v.id_venta "
+                + "JOIN lotes_inventario l ON l.id_lote = d.id_lote "
+                + "JOIN productos p ON p.id_producto = l.id_producto "
+                + "JOIN categorias_producto cp ON cp.id_categoria = p.id_categoria "
+                + "JOIN clientes c ON c.id_cliente = v.id_cliente "
+                + "JOIN estados_venta e ON e.id_estado = v.id_estado "
+                + "ORDER BY v.id_venta, d.id_detalle";
+        List<CommercialSaleDetail> details = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                details.add(new CommercialSaleDetail(
+                        rs.getInt("id_venta"),
+                        rs.getBigDecimal("cantidad_vendida"),
+                        rs.getString("categoria"),
+                        rs.getString("cliente"),
+                        rs.getString("estado")));
+            }
+        }
+        return details;
+    }
+
     // Registrada -> En Preparacion. Solo cambia si la venta sigue Registrada (no pisa otros estados).
     public boolean moveSaleToPreparation(int saleId) throws SQLException {
         String sql = "UPDATE ventas SET id_estado = (SELECT id_estado FROM estados_venta WHERE nombre = ?) "
@@ -90,13 +117,15 @@ public class SalesDao {
         }
     }
 
+    // Punto 3: recibe el recargo y total final dentro de la transacción.
     // Venta + detalles + descuento de stock en UNA transaccion: si algo falla, rollback de todo.
     // Devuelve el id de la venta creada.
-    public int registerSale(int customerId, List<OrderLine> lines) throws SQLException {
+    public int registerSale(int customerId, List<OrderLine> lines, BigDecimal deliveryCost,
+                            BigDecimal finalAmount) throws SQLException {
         boolean autoCommitOriginal = connection.getAutoCommit();
         connection.setAutoCommit(false);
         try {
-            int saleId = insertSale(customerId, lines);
+            int saleId = insertSale(customerId, lines, deliveryCost, finalAmount);
             if (!forEachLine(lines, line -> {
                 if (subtractStock(line) == 0) {
                     return false;
@@ -117,14 +146,15 @@ public class SalesDao {
         }
     }
 
-    private int insertSale(int customerId, List<OrderLine> lines) throws SQLException {
+    // Punto 3: guarda el recargo y el total calculados por la estrategia.
+    private int insertSale(int customerId, List<OrderLine> lines, BigDecimal deliveryCost,
+                           BigDecimal finalAmount) throws SQLException {
         BigDecimal subtotal = lines.stream().map(OrderLine::subtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal descuento = lines.stream().map(OrderLine::discountAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal impuesto = lines.stream().map(OrderLine::taxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal total = lines.stream().map(OrderLine::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         String saleNumber = "V-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
         String sql = "INSERT INTO ventas (numero_venta, id_cliente, subtotal, total_descuento, total_impuesto, "
-                + "monto_total, id_estado) VALUES (?, ?, ?, ?, ?, ?, "
+                + "costo_entrega, monto_total, id_estado) VALUES (?, ?, ?, ?, ?, ?, ?, "
                 + "(SELECT id_estado FROM estados_venta WHERE nombre = 'Registrada'))";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, saleNumber);
@@ -132,7 +162,8 @@ public class SalesDao {
             ps.setBigDecimal(3, subtotal);
             ps.setBigDecimal(4, descuento);
             ps.setBigDecimal(5, impuesto);
-            ps.setBigDecimal(6, total);
+            ps.setBigDecimal(6, deliveryCost);
+            ps.setBigDecimal(7, finalAmount);
             ps.executeUpdate();
             try (ResultSet claves = ps.getGeneratedKeys()) {
                 claves.next();
