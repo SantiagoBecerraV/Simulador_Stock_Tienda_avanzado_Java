@@ -31,7 +31,7 @@ public class SupplierView {
                 "5", this::showCatalog,
                 "6", this::addToCatalog,
                 "7", this::removeFromCatalog,
-                //punto 2
+                // Punto 2. Para ventas: mover esta opción al menú SalesMenu.
                 "8", this::generateDailyPurchaseReport);
         boolean back = false;
 
@@ -44,7 +44,7 @@ public class SupplierView {
             System.out.println("5. Ver catalogo del proveedor");
             System.out.println("6. Agregar producto al catalogo");
             System.out.println("7. Quitar producto del catalogo");
-            //punto 2
+            // Punto 2. Para ventas: "Generar Reporte Diario de Ventas".
             System.out.println("8. Generar Reporte Diario de Compras");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
@@ -134,8 +134,8 @@ public class SupplierView {
         System.out.println(removed ? "El producto ha sido retirado exitosamente del catalogo!!!" : "Ese producto no se ha encontrado en este catalogo...");
     }   
     
-    //punto 2
-    // Genera el reporte de hoy sin solicitar datos.
+    // Punto 2: genera el reporte de hoy sin solicitar datos.
+    // Para ventas: llamar generateDailySalesReport e indicar "ventas" al usuario.
     private void generateDailyPurchaseReport() throws SQLException, IOException {
         DailyPurchaseReport report = controller.generateDailyPurchaseReport();
         System.out.println("Reporte creado: " + report.file().toAbsolutePath());

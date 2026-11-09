@@ -43,14 +43,14 @@ public class SalesMenu {
                 "1", this::createSale,
                 "2", () -> showLots(controller.listLots()),
                 "3", this::moveSaleToPreparation,
-                // Punto 5: opción del reporte comercial.
+                // Punto 5: opción del reporte comercial. Para otra estadística, cambiar texto y método.
                 "4", this::showCommercialStatistics);
         while (true) {
             System.out.println("\n--- Ventas ---");
             System.out.println("1. Nueva venta");
             System.out.println("2. Ver lotes disponibles");
             System.out.println("3. Pasar venta a preparacion");
-            // Punto 5: muestra la opción del reporte comercial.
+            // Punto 5: muestra la opción. Para "menos vendidos" cambiar solo el texto.
             System.out.println("4. Generar Estadisticas Comerciales");
             System.out.println("0. Volver");
             String option = ask("Opcion");
@@ -129,6 +129,7 @@ public class SalesMenu {
     }
 
     // Punto 5: muestra el resumen creado con los datos de ventas.
+    // Para mermas: cambiar títulos y campos impresos; el control de lista vacía se conserva.
     private void showCommercialStatistics() throws SQLException {
         CommercialStatistics statistics = controller.generateCommercialStatistics();
         if (!statistics.hasSales()) {
@@ -141,9 +142,11 @@ public class SalesMenu {
             System.out.println("No hay ventas confirmadas para calcular la categoria principal.");
         } else {
             String quantity = statistics.topQuantity().stripTrailingZeros().toPlainString();
+            // Para "menos vendidos": cambiar "mayor" por "menor"; la cantidad se imprime igual.
             System.out.println("Categoria con mayor volumen vendido: " + statistics.topCategory()
                     + " - " + quantity + " unidades");
         }
+        // Para otro reporte: reemplazar este apartado por la segunda estadística solicitada.
         System.out.println("Clientes con devoluciones:");
         if (statistics.customersWithReturns().isEmpty()) {
             System.out.println("No hay clientes con devoluciones.");

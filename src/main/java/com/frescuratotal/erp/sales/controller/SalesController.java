@@ -98,6 +98,7 @@ public class SalesController {
     }
 
     // Punto 5: obtiene los datos reales y prepara las estadísticas.
+    // Para otra estadística: cambiar solo el método DAO y el servicio que procesa su lista.
     public CommercialStatistics generateCommercialStatistics() throws SQLException {
         List<CommercialSaleDetail> details = dao.listCommercialSaleDetails();
         return commercialStatisticsService.generate(details);

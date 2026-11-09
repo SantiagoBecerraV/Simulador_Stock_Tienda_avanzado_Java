@@ -26,6 +26,7 @@ public class CustomerController {
 
     private static final int MYSQL_DUPLICATE_ENTRY = 1062;
     // Punto 4: cabecera obligatoria del archivo de importación.
+    // Para productos podría ser: nombre;codigo_barras;categoria;unidad_medida;precio_base.
     private static final String IMPORT_HEADER = "nombre;documento;correo;telefono;tipo_cliente";
     // Punto 4: valida el formato básico del correo.
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
@@ -102,6 +103,7 @@ public class CustomerController {
     }
 
     // Punto 4: valida el archivo completo antes de guardar clientes.
+    // Para otra entidad: cambiar nombre, modelo y campo único; ejemplo producto: código de barras.
     public int importCustomersFromFile(Path file) throws IOException, SQLException {
         if (!Files.isRegularFile(file)) {
             throw new FileNotFoundException("No se encontró el archivo clientes_importar.txt.");
@@ -126,12 +128,14 @@ public class CustomerController {
     }
 
     // Punto 4: lee las filas y crea clientes válidos en memoria.
+    // Para productos: cambiar Customer por Product y documents por códigos únicos.
     private List<Customer> readImportFile(Path file) throws IOException, SQLException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         if (lines.isEmpty() || !IMPORT_HEADER.equals(lines.get(0))) {
             throw invalidImport();
         }
 
+        // Para productos: consultar categorías en lugar de tipos de cliente.
         Map<Integer, String> types = dao.findTypes();
         List<Customer> customers = new ArrayList<>();
         Set<String> documents = new HashSet<>();
@@ -150,6 +154,7 @@ public class CustomerController {
     }
 
     // Punto 4: convierte una fila de texto en un cliente.
+    // Para otra entidad: ajustar cantidad de campos, validaciones y constructor del modelo.
     private Customer parseImportLine(String line, Map<Integer, String> types) {
         String[] fields = line.split(";", -1);
         if (fields.length != 5) {
@@ -171,6 +176,7 @@ public class CustomerController {
     }
 
     // Punto 4: busca el ID de MAYORISTA o MINORISTA.
+    // Para productos: reemplazar por búsqueda y validación del ID de categoría.
     private int findTypeId(String typeName, Map<Integer, String> types) {
         if (!typeName.equals("MAYORISTA") && !typeName.equals("MINORISTA")) {
             throw invalidImport();
@@ -183,6 +189,7 @@ public class CustomerController {
     }
 
     // Punto 4: crea el mensaje único para datos inválidos.
+    // Para otra entidad puede conservarse el mismo mensaje de cancelación.
     private IllegalArgumentException invalidImport() {
         return new IllegalArgumentException("Se encontraron registros inválidos. Importación cancelada.");
     }

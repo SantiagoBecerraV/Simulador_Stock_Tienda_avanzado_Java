@@ -58,16 +58,20 @@ public class SupplierController {
         return dao.removeProductFromCatalog(supplierId, productId);
     }
     
-    //punto 2
-    // Genera el CSV con las compras registradas hoy.
+    // Punto 2: genera el CSV con las compras registradas hoy.
+    // Para ventas: cambiar el DAO, modelo y nombre a generateDailySalesReport.
     public DailyPurchaseReport generateDailyPurchaseReport() throws SQLException, IOException {
         LocalDate today = LocalDate.now();
+        // Para ventas: dao.findSalesByDate(today).
         List<DailyPurchase> purchases = dao.findPurchasesByDate(today);
+        // Para ventas: Path.of("ventas_" + today + ".csv").
         Path file = Path.of("compras_" + today + ".csv");
 
         try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            // Para ventas: "NumeroVenta;NombreCliente;MontoTotal".
             writer.write("NumeroCompra;NombreProveedor;MontoTotal");
             writer.newLine();
+            // Para ventas: recorrer sales y escribir formatSale(sale).
             for (DailyPurchase purchase : purchases) {
                 writer.write(formatPurchase(purchase));
                 writer.newLine();
@@ -76,7 +80,8 @@ public class SupplierController {
         return new DailyPurchaseReport(file, purchases.size());
     }
 
-    // Ordena los tres campos requeridos por el CSV.
+    // Punto 2: ordena los tres campos requeridos por el CSV.
+    // Para ventas: usar numero de venta, nombre del cliente y monto total.
     private String formatPurchase(DailyPurchase purchase) {
         String amount = purchase.totalAmount().setScale(2, RoundingMode.HALF_UP)
                 .toPlainString();
@@ -84,7 +89,8 @@ public class SupplierController {
                 + escapeCsv(purchase.supplierName()) + ";" + amount;
     }
 
-    // Protege el archivo si un nombre contiene punto y coma o comillas.
+    // Punto 2: protege el archivo si un nombre contiene punto y coma o comillas.
+    // Para ventas no cambia: también protege el nombre del cliente.
     private String escapeCsv(String value) {
         if (value == null) {
             return "";

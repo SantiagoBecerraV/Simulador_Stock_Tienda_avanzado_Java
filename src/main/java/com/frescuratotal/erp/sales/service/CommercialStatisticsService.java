@@ -17,6 +17,8 @@ public class CommercialStatisticsService {
     private static final String RETURNED_STATUS = "DEVUELTA";
 
     // Punto 5: agrupa las unidades y busca clientes con devoluciones.
+    // Para "menos vendidos": conservar groupingBy y cambiar max(...) por min(...).
+    // Para mermas: agrupar igual, pero sumar cantidadPerdida y no filtrar estados de venta.
     public CommercialStatistics generate(List<CommercialSaleDetail> details) {
         Map<String, BigDecimal> unitsByCategory = details.stream()
                 .filter(detail -> CONFIRMED_STATUS.equalsIgnoreCase(detail.saleStatus())
@@ -26,9 +28,11 @@ public class CommercialStatisticsService {
                         Collectors.reducing(BigDecimal.ZERO,
                                 CommercialSaleDetail::quantity, BigDecimal::add)));
 
+        // Para "menos vendidos": reemplazar max por min; todo lo demás se mantiene.
         Optional<Map.Entry<String, BigDecimal>> topCategory = unitsByCategory.entrySet().stream()
                 .max(Map.Entry.comparingByValue());
 
+        // Para otro reporte: reemplazar este Stream solo si piden una segunda estadística distinta.
         List<String> customersWithReturns = details.stream()
                 .filter(detail -> RETURNED_STATUS.equalsIgnoreCase(detail.saleStatus()))
                 .map(CommercialSaleDetail::customerName)
@@ -36,6 +40,7 @@ public class CommercialStatisticsService {
                 .sorted()
                 .toList();
 
+        // Para mermas: ajustar el record si ya no se necesitan clientes con devoluciones.
         return new CommercialStatistics(
                 !details.isEmpty(),
                 topCategory.map(Map.Entry::getKey).orElse(null),

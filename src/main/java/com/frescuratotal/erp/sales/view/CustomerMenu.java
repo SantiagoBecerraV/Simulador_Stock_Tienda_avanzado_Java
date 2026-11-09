@@ -36,6 +36,7 @@ public class CustomerMenu {
                 "4", this::update,
                 "5", this::delete,
                 // Punto 4: opción de importación masiva.
+                // Para otra entidad: moverla al menú de Productos o Proveedores.
                 "6", this::importCustomers);
         while (true) {
             System.out.println("\n--- Clientes ---");
@@ -45,6 +46,7 @@ public class CustomerMenu {
             System.out.println("4. Actualizar");
             System.out.println("5. Eliminar");
             // Punto 4: muestra la opción de importación masiva.
+            // Para otra entidad: cambiar el texto por "Importar Productos desde Archivo".
             System.out.println("6. Importar Clientes desde Archivo");
             System.out.println("0. Volver");
             String option = ask("Opcion");
@@ -93,6 +95,7 @@ public class CustomerMenu {
     }
 
     // Punto 4: importa el archivo ubicado en la raíz del proyecto.
+    // Para productos: usar productos_importar.txt y llamar al controlador de productos.
     private void importCustomers() throws SQLException, IOException {
         int total = controller.importCustomersFromFile(Path.of("clientes_importar.txt"));
         System.out.println("Importación completada. Total de clientes registrados: " + total);

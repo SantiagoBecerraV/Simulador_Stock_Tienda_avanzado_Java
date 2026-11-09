@@ -13,22 +13,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SupplierDao {
-    //punto 2
-    // Busca las compras recibidas en una fecha específica.
+    // Punto 2: busca las compras recibidas en una fecha específica.
+    // Para ventas: renombrar a findSalesByDate y usar ventas, clientes y fecha_venta.
     public List<DailyPurchase> findPurchasesByDate(LocalDate date) throws SQLException {
+        // Para ventas: SELECT v.numero_venta, c.nombre, v.monto_total
+        // FROM ventas v JOIN clientes c ON c.id_cliente = v.id_cliente
+        // WHERE DATE(v.fecha_venta) = ? ORDER BY v.id_venta.
+        // Si piden solo ventas finalizadas: JOIN estados_venta e y agregar e.nombre = 'Entregada'.
         String sql = "SELECT l.numero_lote, p.nombre, "
                 + "(l.cantidad_inicial * l.precio_compra) AS monto_total "
                 + "FROM lotes_inventario l "
                 + "JOIN proveedores p ON p.id_proveedor = l.id_proveedor "
                 + "WHERE DATE(l.fecha_ingreso) = ? "
                 + "ORDER BY l.id_lote";
+        // Para ventas: cambiar a List<DailySale> sales.
         List<DailyPurchase> purchases = new ArrayList<>();
 
         Connection connection = DatabaseConnection.getConnection();
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            // Para ventas se conserva este parámetro: también filtra la fecha actual.
             statement.setDate(1, Date.valueOf(date));
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
+                    // Para ventas: crear DailySale con numero_venta, nombre del cliente y monto_total.
                     purchases.add(new DailyPurchase(
                             rs.getString("numero_lote"),
                             rs.getString("nombre"),

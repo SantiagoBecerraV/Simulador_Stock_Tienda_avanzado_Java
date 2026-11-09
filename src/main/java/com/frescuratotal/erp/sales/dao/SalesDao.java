@@ -81,7 +81,12 @@ public class SalesDao {
     }
 
     // Punto 5: consulta cada detalle con su categoría, cliente y estado.
+    // Para "menos vendidos" se conserva esta consulta; solo cambia max() por min() en el servicio.
+    // Para mermas: usar registro_mermas, lotes_inventario, productos y categorias_producto.
     public List<CommercialSaleDetail> listCommercialSaleDetails() throws SQLException {
+        // Para mermas: SELECT rm.id_registro, rm.cantidad_perdida, cp.nombre AS categoria,
+        // p.nombre AS producto FROM registro_mermas rm JOIN lotes_inventario l ON l.id_lote = rm.id_lote
+        // JOIN productos p ON p.id_producto = l.id_producto JOIN categorias_producto cp ON cp.id_categoria = p.id_categoria.
         String sql = "SELECT v.id_venta, d.cantidad_vendida, cp.nombre AS categoria, "
                 + "c.nombre AS cliente, e.nombre AS estado "
                 + "FROM ventas v "
@@ -92,9 +97,11 @@ public class SalesDao {
                 + "JOIN clientes c ON c.id_cliente = v.id_cliente "
                 + "JOIN estados_venta e ON e.id_estado = v.id_estado "
                 + "ORDER BY v.id_venta, d.id_detalle";
+        // Para mermas: crear un record con cantidadPerdida, categoría y producto.
         List<CommercialSaleDetail> details = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
+                // Para mermas: leer cantidad_perdida y los alias definidos en el SQL nuevo.
                 details.add(new CommercialSaleDetail(
                         rs.getInt("id_venta"),
                         rs.getBigDecimal("cantidad_vendida"),

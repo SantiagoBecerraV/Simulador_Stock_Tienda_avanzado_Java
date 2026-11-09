@@ -60,6 +60,7 @@ public class CustomerDao {
     }
 
     // Punto 4: indica si el documento ya está registrado.
+    // Para productos: consultar productos WHERE codigo_barras = ?; para proveedores, nit = ?.
     public boolean documentExists(String document) throws SQLException {
         String sql = "SELECT 1 FROM clientes WHERE documento = ? LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -71,7 +72,9 @@ public class CustomerDao {
     }
 
     // Punto 4: inserta todos los clientes o revierte el lote completo.
+    // Para otra entidad: cambiar tabla, columnas y valores; conservar transacción y addBatch().
     public void insertAll(List<Customer> customers) throws SQLException {
+        // Para productos: INSERT INTO productos (nombre, codigo_barras, id_categoria, unidad_medida, precio_base).
         String sql = "INSERT INTO clientes (nombre, documento, email, telefono, direccion, id_tipo) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
         boolean originalAutoCommit = connection.getAutoCommit();

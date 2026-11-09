@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Punto 1
 /**
- * Stores customers that were already read from the database during the current
- * application execution. The cache is shared by the customer and sales modules.
+ * Almacena los clientes que ya fueron leídos de la base de datos durante la
+ * ejecución actual de la aplicación. La caché se comparte entre los módulos de clientes y ventas.
  */
 public final class CustomerCache {
 
