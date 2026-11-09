@@ -13,6 +13,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SupplierDao {
+    
+    public List<CommercialSaleDetail> listCommercialSaleDetails() throws SQLException {
+        String sql = "SELECT " 
+                    +    "l.id_lote,"
+                    +    "l.cantidad_inicial, "
+                    +    "e.nombre AS estado_lote, "
+                    +    "p.id_proveedor, "
+                    +   "p.nombre AS nombre_proveedor "
+                    +"FROM lotes_inventario l "
+                    +"INNER JOIN proveedores p ON l.id_proveedor = p.id_proveedor "
+                    +"INNER JOIN estados_lote e ON l.id_estado = e.id_estado; ";
+        List<CommercialSaleDetail> details = new ArrayList<>();
+        Connection connection = DatabaseConnection.getConnection();
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                details.add(new CommercialSaleDetail(
+                        rs.getInt("id_lote"),
+                        rs.getBigDecimal("cantidad_inicial"),
+                        rs.getString("estado_lote"),
+                        rs.getInt("id_proveedor"),
+                        rs.getString("nombre_proveedor")));
+            }
+        }
+        return details;
+    }    
+    
+    
     // Punto 2: busca las compras recibidas en una fecha específica.
     // Para ventas: renombrar a findSalesByDate y usar ventas, clientes y fecha_venta.
     public List<DailyPurchase> findPurchasesByDate(LocalDate date) throws SQLException {

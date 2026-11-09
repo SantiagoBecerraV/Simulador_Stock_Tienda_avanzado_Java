@@ -1,5 +1,8 @@
 package com.frescuratotal.erp.suppliers.controller;
 
+import com.frescuratotal.erp.suppliers.model.CommercialSaleDetail;
+import com.frescuratotal.erp.suppliers.model.CommercialStatistics;
+import com.frescuratotal.erp.suppliers.model.CommercialStatisticsService;
 import com.frescuratotal.erp.suppliers.model.DailyPurchase;
 import com.frescuratotal.erp.suppliers.model.DailyPurchaseReport;
 import com.frescuratotal.erp.suppliers.model.Supplier;
@@ -19,6 +22,11 @@ import java.util.List;
 
 public class SupplierController {
 
+    private final CommercialStatisticsService commercialStatisticsService;
+
+    public SupplierController() {
+        this.commercialStatisticsService = new CommercialStatisticsService();
+    }
     private final SupplierDao dao = new SupplierDao();
 
     public List<Supplier> listSuppliers() throws SQLException {
@@ -112,4 +120,10 @@ public class SupplierController {
     private boolean isBlank(String text) {
         return text == null || text.isBlank();
     }
+    
+
+    public CommercialStatistics generateCommercialStatistics() throws SQLException {
+        List<CommercialSaleDetail> details = dao.listCommercialSaleDetails();
+        return commercialStatisticsService.generate(details);
+    }    
 }

@@ -3,15 +3,15 @@ package com.frescuratotal.erp.sales.controller;
 import com.frescuratotal.erp.common.CustomerCache;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
-import com.frescuratotal.erp.sales.model.CommercialSaleDetail;
-import com.frescuratotal.erp.sales.model.CommercialStatistics;
+import com.frescuratotal.erp.suppliers.model.CommercialSaleDetail;
+import com.frescuratotal.erp.suppliers.model.CommercialStatistics;
 import com.frescuratotal.erp.sales.model.DeliveryMode;
 import com.frescuratotal.erp.sales.dao.SalesDao;
 import com.frescuratotal.erp.sales.model.OrderLine;
 import com.frescuratotal.erp.sales.model.SalesLot;
 import com.frescuratotal.erp.sales.model.RegisteredSale;
 import com.frescuratotal.erp.sales.strategy.DeliveryFeeService;
-import com.frescuratotal.erp.sales.service.CommercialStatisticsService;
+import com.frescuratotal.erp.suppliers.model.CommercialStatisticsService;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
@@ -97,12 +97,6 @@ public class SalesController {
         return dao.listRegisteredSales();
     }
 
-    // Punto 5: obtiene los datos reales y prepara las estadísticas.
-    // Para otra estadística: cambiar solo el método DAO y el servicio que procesa su lista.
-    public CommercialStatistics generateCommercialStatistics() throws SQLException {
-        List<CommercialSaleDetail> details = dao.listCommercialSaleDetails();
-        return commercialStatisticsService.generate(details);
-    }
 
     // Logistica solo ve ventas En Preparacion; este paso las deja listas para despacho.
     public void moveSaleToPreparation(int saleId) throws SQLException {

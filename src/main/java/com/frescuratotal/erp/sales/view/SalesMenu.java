@@ -3,7 +3,7 @@ package com.frescuratotal.erp.sales.view;
 import com.frescuratotal.erp.common.ConsoleTable;
 import com.frescuratotal.erp.sales.dao.CustomerDao;
 import com.frescuratotal.erp.sales.model.Customer;
-import com.frescuratotal.erp.sales.model.CommercialStatistics;
+import com.frescuratotal.erp.suppliers.model.CommercialStatistics;
 import com.frescuratotal.erp.sales.model.DeliveryMode;
 import com.frescuratotal.erp.sales.controller.BillingController;
 import com.frescuratotal.erp.sales.controller.SalesController;
@@ -39,12 +39,9 @@ public class SalesMenu {
     }
 
     public void run() {
-        Map<String, MenuAction> actions = Map.of(
-                "1", this::createSale,
+        Map<String, MenuAction> actions = Map.of("1", this::createSale,
                 "2", () -> showLots(controller.listLots()),
-                "3", this::moveSaleToPreparation,
-                // Punto 5: opción del reporte comercial. Para otra estadística, cambiar texto y método.
-                "4", this::showCommercialStatistics);
+                "3", () -> this.moveSaleToPreparation());
         while (true) {
             System.out.println("\n--- Ventas ---");
             System.out.println("1. Nueva venta");
@@ -128,34 +125,7 @@ public class SalesMenu {
         System.out.println("Venta en preparacion: ya aparece en el panel de Logistica.");
     }
 
-    // Punto 5: muestra el resumen creado con los datos de ventas.
-    // Para mermas: cambiar títulos y campos impresos; el control de lista vacía se conserva.
-    private void showCommercialStatistics() throws SQLException {
-        CommercialStatistics statistics = controller.generateCommercialStatistics();
-        if (!statistics.hasSales()) {
-            System.out.println("No existen datos suficientes para generar estadísticas comerciales.");
-            return;
-        }
 
-        System.out.println("\n===== ESTADISTICAS COMERCIALES =====");
-        if (statistics.topCategory() == null) {
-            System.out.println("No hay ventas confirmadas para calcular la categoria principal.");
-        } else {
-            String quantity = statistics.topQuantity().stripTrailingZeros().toPlainString();
-            // Para "menos vendidos": cambiar "mayor" por "menor"; la cantidad se imprime igual.
-            System.out.println("Categoria con mayor volumen vendido: " + statistics.topCategory()
-                    + " - " + quantity + " unidades");
-        }
-        // Para otro reporte: reemplazar este apartado por la segunda estadística solicitada.
-        System.out.println("Clientes con devoluciones:");
-        if (statistics.customersWithReturns().isEmpty()) {
-            System.out.println("No hay clientes con devoluciones.");
-        } else {
-            statistics.customersWithReturns().stream()
-                    .map(customer -> "- " + customer)
-                    .forEach(System.out::println);
-        }
-    }
 
     // La factura se crea despues de guardar la venta: si falla, la venta no se pierde y se puede
     // reintentar desde Facturacion (no se duplica, una venta tiene una sola factura).

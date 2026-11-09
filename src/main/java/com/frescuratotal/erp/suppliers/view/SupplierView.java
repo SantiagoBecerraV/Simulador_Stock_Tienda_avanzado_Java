@@ -1,6 +1,7 @@
 package com.frescuratotal.erp.suppliers.view;
 
 import com.frescuratotal.erp.common.ConsoleTable;
+import com.frescuratotal.erp.suppliers.model.CommercialStatistics;
 import com.frescuratotal.erp.suppliers.controller.SupplierController;
 //punto 2
 import com.frescuratotal.erp.suppliers.model.DailyPurchaseReport;
@@ -31,8 +32,9 @@ public class SupplierView {
                 "5", this::showCatalog,
                 "6", this::addToCatalog,
                 "7", this::removeFromCatalog,
+                "8", this::showCommercialStatistics,
                 // Punto 2. Para ventas: mover esta opción al menú SalesMenu.
-                "8", this::generateDailyPurchaseReport);
+                "9", this::generateDailyPurchaseReport);
         boolean back = false;
 
         while (!back) {
@@ -43,9 +45,10 @@ public class SupplierView {
             System.out.println("4. Desactivar proveedor");
             System.out.println("5. Ver catalogo del proveedor");
             System.out.println("6. Agregar producto al catalogo");
-            System.out.println("7. Quitar producto del catalogo");
-            // Punto 2. Para ventas: "Generar Reporte Diario de Ventas".
-            System.out.println("8. Generar Reporte Diario de Compras");
+            System.out.println("7. Quitar producto del catalogo");            
+            // Punto 5: muestra la opción. Para "menos vendidos" cambiar solo el texto.
+            System.out.println("8. Generar Estadisticas Comerciales");
+            System.out.println("9. Generar Reporte Diario de Compras");
             System.out.println("0. Volver");
             System.out.print("Seleccione una opcion: ");
 
@@ -62,6 +65,35 @@ public class SupplierView {
             }
         }
     }
+    
+
+    private void showCommercialStatistics() throws SQLException {
+        CommercialStatistics statistics = controller.generateCommercialStatistics();
+        if (!statistics.hasSales()) {
+            System.out.println("No existen datos suficientes para generar estadísticas comerciales.");
+            return;
+        }
+
+        System.out.println("\n===== Reporte de Rendimiento de Proveedores  =====");
+        if (statistics.topCategory() == null) {
+            System.out.println("No hay proveedores confirmadas para calcular la categoria principal.");
+        } else {
+            String quantity = statistics.topQuantity().stripTrailingZeros().toPlainString();
+            // Para "menos vendidos": cambiar "mayor" por "menor"; la cantidad se imprime igual.
+            System.out.println("Proveedor con mayor volumen de suministro: " + statistics.topCategory()
+                    + " - " + quantity + " unidades");
+        }
+        // Para otro reporte: reemplazar este apartado por la segunda estadística solicitada.
+        System.out.println("Proveedores con Lotes Vencidos Registrados:");
+        if (statistics.customersWithReturns().isEmpty()) {
+            System.out.println("No hay proveedores con lotes vencidos registrados.");
+        } else {
+            statistics.customersWithReturns().stream()
+                    .map(customer -> "- " + customer)
+                    .forEach(System.out::println);
+        }
+    }        
+    
 
     private void listSuppliers() throws SQLException {
         List<Supplier> suppliers = controller.listSuppliers();
